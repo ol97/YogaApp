@@ -44,6 +44,7 @@ class PoseEstimator(context: Context, private val type:String,
     private var classifier: FinalClassifier
     private var analysisInProgrss: Boolean = false
     private var rotation: Float = 90F
+
     private val mean  = floatArrayOf(-7.70853226e-03F, -6.11706507e-01F,  1.94246296e-03F,
         -3.76282272e-01F, -1.41938343e-01F, -3.45730721e-01F, -2.20449061e-01F,
         -1.73007281e-01F, -1.92002760e-01F, -9.46467036e-02F,  7.86759911e-05F, -3.42683745e-01F,
@@ -153,7 +154,6 @@ class PoseEstimator(context: Context, private val type:String,
         val xArray = FloatArray(16)
         val yArray = FloatArray(16)
         val scoresArray = FloatArray(16)
-        val inputArray = FloatArray(32)
         for (i in 0 until 16){
             CoroutineScope(Default).launch{
                 var max_value = 0F
@@ -187,55 +187,16 @@ class PoseEstimator(context: Context, private val type:String,
             }.join()
         }
 
-        val paint = Paint()
-        val hsvColor = FloatArray(3)
-        hsvColor[1] = 1F
-        hsvColor[2] = 1F
-        paint.strokeWidth = bitmap.width.toFloat()/224F*6F
-        val canvas = Canvas(bitmap)
-        for (i in 0 until 16){
-            hsvColor[0] = 120F*scoresArray[i]
-            paint.color = Color.HSVToColor(hsvColor)
-            if (scoresArray[i] >= confidenceThreshold){
-                canvas.drawPoint(pointsArray[2*i], pointsArray[2*i+1], paint)
-            }
-        }
+        val inputArray = normalizeInputArray(xArray, yArray, pointsArray,scoresArray)
+        val classifierOutput = classifyPose(inputArray)
 
 
-        for (i in 0 until 16){
-            xArray[i] = pointsArray[i*2]
-            yArray[i] = pointsArray[i*2+1]
-        }
-        val xArrayMin = xArray.minOrNull()
-        var xArrayMax = xArray.maxOrNull()
-        val yArrayMin = yArray.minOrNull()
-        var yArrayMax = yArray.maxOrNull()
+        analyzerFragment.updateUI(drawPoints(bitmap,pointsArray,scoresArray),
+            classifierOutput.first, classifierOutput.second)
 
-        for (i in 0 until 16){
-            xArray[i] -= (xArrayMax!! - xArrayMin!!)/2 + xArrayMin
-            yArray[i] -= (yArrayMax!! - yArrayMin!!)/2 + yArrayMin
-        }
+    }
 
-        xArrayMax = xArray.maxOrNull()
-        yArrayMax = yArray.maxOrNull()
-
-        for (i in 0 until 16){
-            xArray[i] /= xArrayMax!!
-            yArray[i] /= yArrayMax!!
-        }
-
-        for (i in 0 until 16){
-            if (scoresArray[i] >= confidenceThreshold){
-                inputArray[i*2] = (xArray[i] - mean[2*i])/std[2*i]
-                inputArray[i*2+1] = (yArray[i] - mean[2*i+1])/std[2*i+1]
-            }
-            else{
-                inputArray[i*2] = 0F
-                inputArray[i*2+1] = 0F
-            }
-        }
-
-
+    private fun classifyPose(inputArray: FloatArray): Pair<String,Float>{
         var indexOfMax = 0
         var maxConfidence = 0F
         if (inputArray.distinct().lastIndex != 0){
@@ -269,9 +230,62 @@ class PoseEstimator(context: Context, private val type:String,
             9 -> {pose = "Garland Pose"}
             10 -> {pose = "Unknown"}
         }
+        return Pair(pose, maxConfidence)
+    }
 
-        analyzerFragment.updateUI(bitmap, pose, maxConfidence)
+    private fun drawPoints(bitmap: Bitmap, pointsArray: FloatArray, scoresArray: FloatArray):Bitmap{
+        val paint = Paint()
+        val hsvColor = FloatArray(3)
+        hsvColor[1] = 1F
+        hsvColor[2] = 1F
+        paint.strokeWidth = bitmap.width.toFloat()/224F*6F
+        val canvas = Canvas(bitmap)
+        for (i in 0 until 16){
+            hsvColor[0] = 120F*scoresArray[i]
+            paint.color = Color.HSVToColor(hsvColor)
+            if (scoresArray[i]*100 >= confidenceThreshold){
+                canvas.drawPoint(pointsArray[2*i], pointsArray[2*i+1], paint)
+            }
+        }
+        return bitmap
+    }
 
+    private fun normalizeInputArray(xArray: FloatArray, yArray: FloatArray, pointsArray: FloatArray,
+                                    scoresArray:FloatArray):FloatArray {
+        val inputArray = FloatArray(32)
+        for (i in 0 until 16){
+            xArray[i] = pointsArray[i*2]
+            yArray[i] = pointsArray[i*2+1]
+        }
+        val xArrayMin = xArray.minOrNull()
+        var xArrayMax = xArray.maxOrNull()
+        val yArrayMin = yArray.minOrNull()
+        var yArrayMax = yArray.maxOrNull()
+
+        for (i in 0 until 16){
+            xArray[i] -= (xArrayMax!! - xArrayMin!!)/2 + xArrayMin
+            yArray[i] -= (yArrayMax!! - yArrayMin!!)/2 + yArrayMin
+        }
+
+        xArrayMax = xArray.maxOrNull()
+        yArrayMax = yArray.maxOrNull()
+
+        for (i in 0 until 16){
+            xArray[i] /= xArrayMax!!
+            yArray[i] /= yArrayMax!!
+        }
+
+        for (i in 0 until 16){
+            if (scoresArray[i] >= confidenceThreshold){
+                inputArray[i*2] = (xArray[i] - mean[2*i])/std[2*i]
+                inputArray[i*2+1] = (yArray[i] - mean[2*i+1])/std[2*i+1]
+            }
+            else{
+                inputArray[i*2] = 0F
+                inputArray[i*2+1] = 0F
+            }
+        }
+        return inputArray
     }
 
 
