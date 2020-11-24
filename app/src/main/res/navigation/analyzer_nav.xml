@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/analyzer_nav"
+    app:startDestination="@id/analyzerFragment">
+
+    <fragment
+        android:id="@+id/analyzerFragment"
+        android:name="com.example.yogaapp.AnalyzerFragment"
+        android:label="Analyzer"
+        tools:layout="@layout/fragment_analyzer" >
+        <action
+            android:id="@+id/action_analyzerFragment_to_settingsFragment"
+            app:destination="@id/settingsFragment" />
+    </fragment>
+    <fragment
+        android:id="@+id/settingsFragment"
+        android:name="com.example.yogaapp.SettingsFragment"
+        android:label="Settings" >
+        <action
+            android:id="@+id/action_settingsFragment_to_analyzerFragment"
+            app:destination="@id/analyzerFragment" />
+    </fragment>
+</navigation>

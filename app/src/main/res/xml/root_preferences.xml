@@ -1,0 +1,33 @@
+<PreferenceScreen xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <PreferenceCategory app:title="Pose Estimation Model">
+
+        <ListPreference
+            app:defaultValue="RT"
+            app:entries="@array/reply_entries"
+            app:entryValues="@array/reply_values"
+            app:key="modelType"
+            app:title="Pose estimation model"
+            app:useSimpleSummaryProvider="true" />
+
+    </PreferenceCategory>
+
+    <PreferenceCategory app:title="Thresholds">
+        <SeekBarPreference
+            android:key="confidenceThreshold"
+            app:title="Pose estimation confidence threshold"
+            app:showSeekBarValue="true"
+            app:defaultValue="20" />
+
+        <SeekBarPreference
+            android:key="timeThreshold"
+            app:title="Filtering time threshold (seconds)"
+            app:seekBarIncrement="1"
+            android:max="10"
+            app:showSeekBarValue="true"
+            app:defaultValue="1" />
+
+    </PreferenceCategory>
+
+</PreferenceScreen>
