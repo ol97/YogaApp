@@ -22,5 +22,8 @@
         <action
             android:id="@+id/action_sessionDetailsFragment_to_itemListFragment"
             app:destination="@id/itemListFragment" />
+        <argument
+            android:name="sessionid"
+            app:argType="string" />
     </fragment>
 </navigation>
