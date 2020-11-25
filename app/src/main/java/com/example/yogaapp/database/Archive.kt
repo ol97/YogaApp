@@ -13,18 +13,19 @@ class Archive(context: Context) : SQLiteOpenHelper(context,"Archive.db", null, 1
         if (db != null) {
             try{
                 db.execSQL("create table " + ArchiveDbSchema.SessionTable.TABLE_NAME + "(" +
+                        "id integer primary key autoincrement, " +
                         ArchiveDbSchema.SessionTable.Cols.NAME + ", " +
                         ArchiveDbSchema.SessionTable.Cols.DATE + ", " +
                         ArchiveDbSchema.SessionTable.Cols.TIME + ", " +
                         ArchiveDbSchema.SessionTable.Cols.DURATION + ")" )
 
                 db.execSQL("create table " + ArchiveDbSchema.PosesInSessionTable.TABLE_NAME + " (" +
-                        " _id integer primary key autoincrement, " +
+                        " id integer primary key autoincrement, " +
                         ArchiveDbSchema.PosesInSessionTable.Cols.SESSION_ID + ", " +
                         ArchiveDbSchema.PosesInSessionTable.Cols.DURATION + ", " +
                         ArchiveDbSchema.PosesInSessionTable.Cols.NUMBER_IN_SEQUENCE + ", " +
                         "FOREIGN KEY (" + ArchiveDbSchema.PosesInSessionTable.Cols.SESSION_ID +
-                        ") REFERENCES " + ArchiveDbSchema.SessionTable.TABLE_NAME + " (rowid))" )
+                        ") REFERENCES " + ArchiveDbSchema.SessionTable.TABLE_NAME + " (id))" )
             }
             catch(e:Exception)
             {

@@ -8,6 +8,7 @@ class ArchiveDbSchema {
 
         public class Cols {
             companion object{
+                public val ID: String = "id"
                 public val DATE: String = "date"
                 public val DURATION: String = "duration"
                 public val TIME: String = "time"

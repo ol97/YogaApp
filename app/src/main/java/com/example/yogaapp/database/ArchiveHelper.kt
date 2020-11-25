@@ -8,7 +8,7 @@ import java.lang.Exception
 import java.text.SimpleDateFormat
 import java.util.*
 
-class ArchiveHelper(context: Context) {
+public class ArchiveHelper(context: Context) {
     private val database = Archive(context).writableDatabase
 
     public fun insertSession(listOfPoses: List<Pair<String, Long>>, name: String): Boolean{
@@ -50,8 +50,9 @@ class ArchiveHelper(context: Context) {
 
 
     public fun readBasicSessionData(): List<Array<String>> {
-        val cursor = database.rawQuery("Select * from " +
-                ArchiveDbSchema.SessionTable.TABLE_NAME, null)
+        val cursor = database.query(false, ArchiveDbSchema.SessionTable.TABLE_NAME,
+            null, null, null, null, null ,
+            ArchiveDbSchema.SessionTable.Cols.ID +" desc", null, null)
         val list = mutableListOf<Array<String>>()
         if (cursor.moveToFirst())
         {
@@ -61,9 +62,9 @@ class ArchiveHelper(context: Context) {
                 val date = cursor.getString(cursor.getColumnIndex(ArchiveDbSchema.SessionTable.Cols.DATE))
                 val time = cursor.getString(cursor.getColumnIndex(ArchiveDbSchema.SessionTable.Cols.TIME))
                 val duration = cursor.getString(cursor.getColumnIndex(ArchiveDbSchema.SessionTable.Cols.DURATION))
-                val rowid = cursor.getString(cursor.getColumnIndex("rowid"))
+                val id = cursor.getString(cursor.getColumnIndex(ArchiveDbSchema.SessionTable.Cols.ID))
 
-                list.add(arrayOf(rowid, name, date, time, duration))
+                list.add(arrayOf(id, name, date, time, duration))
             }
             while (cursor.moveToNext())
         }
@@ -74,9 +75,9 @@ class ArchiveHelper(context: Context) {
 
     public fun readDetailedSessionData(sessionKey: String): List<Array<String>>{
         val cursor = database.rawQuery("Select * from " +
-                ArchiveDbSchema.PosesInSessionTable.TABLE_NAME + ", " +
+                ArchiveDbSchema.PosesInSessionTable.TABLE_NAME + " join " +
                 ArchiveDbSchema.SessionTable.TABLE_NAME +
-                " where rowid =  ?", arrayOf(sessionKey))
+                " where id =  ?", arrayOf(sessionKey))
 
         val list = mutableListOf<Array<String>>()
         if (cursor.moveToFirst())
