@@ -6,6 +6,7 @@ import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
+import android.os.SystemClock
 import android.util.Size
 import androidx.camera.core.ImageAnalysis
 import androidx.camera.core.ImageProxy
@@ -191,8 +192,8 @@ class PoseEstimator(context: Context, private val type:String,
         val classifierOutput = classifyPose(inputArray)
 
 
-        analyzerFragment.updateUI(drawPoints(bitmap,pointsArray,scoresArray),
-            classifierOutput.first, classifierOutput.second)
+        analyzerFragment.update(drawPoints(bitmap,pointsArray,scoresArray),
+            classifierOutput.first, classifierOutput.second, System.currentTimeMillis())
 
     }
 

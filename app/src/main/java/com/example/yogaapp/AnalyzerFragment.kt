@@ -18,13 +18,14 @@ import androidx.fragment.app.Fragment
 import android.widget.ImageButton
 import android.widget.TextView
 import android.widget.Toast
+import android.widget.ToggleButton
 import androidx.camera.core.CameraSelector
 import androidx.camera.core.ImageAnalysis
 import androidx.camera.lifecycle.ProcessCameraProvider
-import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.navigation.fragment.findNavController
 import androidx.preference.PreferenceManager
+import com.example.yogaapp.database.ArchiveHelper
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
@@ -41,7 +42,8 @@ class AnalyzerFragment : Fragment() {
     private lateinit var orientationListener: OrientationEventListener
     private lateinit var analyzer:PoseEstimator
     private lateinit var targetSize: Size
-    private var analysisTimer:Long = 0
+    private lateinit var toggleButtonRecord: ToggleButton
+    private var lastUpdated:Long = 0
     private lateinit var imageButtonSwitchCamera:ImageButton
     private var lensFacing = CameraSelector.DEFAULT_BACK_CAMERA
     private val LENS_FACING_KEY: String = "lens_facing"
@@ -55,6 +57,8 @@ class AnalyzerFragment : Fragment() {
     private val TAG = "CameraXBasic"
     private val REQUEST_CODE_PERMISSIONS = 10
     private val REQUIRED_PERMISSIONS = arrayOf(Manifest.permission.CAMERA)
+    private var recordingFlag: Boolean = false
+    private val listOfPoses: MutableList<Pair<String, Long>> = mutableListOf()
 
 
     override fun onCreateView(
@@ -74,6 +78,32 @@ class AnalyzerFragment : Fragment() {
         textViewPoseConfidence = view.findViewById(R.id.textViewPoseConfidence)
         imageButtonSwitchCamera = view.findViewById(R.id.imageButtonSwitchCamera)
         textViewPose = view.findViewById(R.id.textViewPose)
+        toggleButtonRecord = view.findViewById(R.id.toggleButtonRecord)
+        toggleButtonRecord.setOnCheckedChangeListener { buttonView, isChecked ->
+
+            recordingFlag = isChecked
+            if (isChecked)
+            {
+                listOfPoses.clear()
+            }
+            if (!isChecked && listOfPoses.lastIndex > 2)
+            {
+                context?.let {
+                    val archiveHelper = ArchiveHelper.getInstance(it)
+                    val ok = archiveHelper?.insertSession(filterListOfPoses(listOfPoses), "test1")
+                    if (!ok!!)
+                    {
+                        val t = Toast.makeText(context, "Saving failed!", Toast.LENGTH_SHORT)
+                        t.show()
+                    }
+                    else
+                    {
+                        val t = Toast.makeText(context, "Saving succeeded!", Toast.LENGTH_SHORT)
+                        t.show()
+                    }
+                }
+            }
+        }
         loadSettings()
     }
 
@@ -124,7 +154,7 @@ class AnalyzerFragment : Fragment() {
                 REQUIRED_PERMISSIONS, REQUEST_CODE_PERMISSIONS
             )
         }
-        analysisTimer = SystemClock.uptimeMillis()
+        lastUpdated = SystemClock.uptimeMillis()
         imageButtonSwitchCamera.setOnClickListener {
             if (lensFacing ==  CameraSelector.DEFAULT_BACK_CAMERA) {
                 lensFacing = CameraSelector.DEFAULT_FRONT_CAMERA
@@ -237,7 +267,16 @@ class AnalyzerFragment : Fragment() {
         }
     }
 
-    fun updateUI(bitmap: Bitmap, pose: String, confidence: Float){
+    fun update(bitmap: Bitmap, pose: String, confidence: Float, timestamp: Long){
+        updateUI(bitmap, pose, confidence, timestamp)
+        if (recordingFlag)
+        {
+            listOfPoses.add(Pair(pose, timestamp))
+        }
+
+    }
+
+    private fun updateUI(bitmap: Bitmap, pose: String, confidence: Float, timestamp: Long){
         requireActivity().runOnUiThread {
             try{
                 val canvas = textureView.lockCanvas()
@@ -265,10 +304,10 @@ class AnalyzerFragment : Fragment() {
             }
 
             textViewFPS.setText("Time Per Frame: " +
-                    (System.currentTimeMillis() - analysisTimer).toString() + "ms")
+                    (timestamp - lastUpdated).toString() + "ms")
             textViewPoseConfidence.setText("Confidence: " + (round(confidence * 10000) / 100).toString() + "%")
             textViewPose.setText("Pose: " + pose)
-            analysisTimer = System.currentTimeMillis()
+            lastUpdated = timestamp
         }
     }
 
@@ -325,5 +364,75 @@ class AnalyzerFragment : Fragment() {
 
             }, ContextCompat.getMainExecutor(context))
         }
+    }
+
+    private fun filterListOfPoses(listOfPoses: List<Pair<String, Long>>):List<Pair<String, Long>>
+    {
+        val temporaryList1: MutableList<Pair<String, Long>> = mutableListOf()
+        val temporaryList2: MutableList<Pair<String, Long>> = mutableListOf()
+        var lastTimestamp = 0L
+        if (listOfPoses.isNotEmpty())
+        {
+            lastTimestamp = listOfPoses.last().second
+        }
+        for (i in listOfPoses.indices)
+        {
+            if ( i > 0 )
+            {
+                if (listOfPoses[i].first != listOfPoses[i-1].first)
+                {
+                    temporaryList1.add(listOfPoses[i])
+                }
+            }
+            if (i == 0)
+            {
+                temporaryList1.add(listOfPoses[i])
+            }
+        }
+
+        for (i in temporaryList1.indices)
+        {
+            if (i > 0)
+            {
+                if ((temporaryList1[i].second - temporaryList1[i-1].second) >= timeThreshold*1000)
+                {
+                    temporaryList2.add(temporaryList1[i])
+                }
+                else if (i == 0)
+                {
+                    temporaryList2.add(temporaryList1[i])
+                }
+            }
+        }
+
+        temporaryList1.clear()
+        for (i in temporaryList2.indices)
+        {
+            if ( i > 0 )
+            {
+                if (temporaryList2[i].first != temporaryList2[i-1].first)
+                {
+                    temporaryList1.add(listOfPoses[i])
+                }
+            }
+            if (i == 0)
+            {
+                temporaryList1.add(listOfPoses[i])
+            }
+        }
+
+        val finalList: MutableList<Pair<String, Long>> = mutableListOf()
+        for (i in temporaryList1.indices)
+        {
+            if (i < temporaryList1.lastIndex)
+            {
+                finalList.add(Pair(temporaryList1[i].first, temporaryList1[i+1].second - temporaryList1[i].second))
+            }
+            else
+            {
+                finalList.add(Pair(temporaryList1[i].first, lastTimestamp - temporaryList1[i].second))
+            }
+        }
+        return finalList
     }
 }

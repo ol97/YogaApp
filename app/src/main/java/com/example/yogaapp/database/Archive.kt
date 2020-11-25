@@ -4,30 +4,43 @@ import android.content.ContentValues
 import android.content.Context
 import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteOpenHelper
+import android.util.Log
+import java.lang.Exception
 
 class Archive(context: Context) : SQLiteOpenHelper(context,"Archive.db", null, 1) {
 
     override fun onCreate(db: SQLiteDatabase?) {
         if (db != null) {
-            db.execSQL("create table" + ArchiveDbSchema.SessionTable.TABLE_NAME + "(" +
-                    " _id integer primary key autoincrement, " +
-                    ArchiveDbSchema.SessionTable.Cols.NAME + " TEXT, " +
-                    ArchiveDbSchema.SessionTable.Cols.DATE + " TEXT, " +
-                    ArchiveDbSchema.SessionTable.Cols.TIME + " TEXT, " +
-                    ArchiveDbSchema.SessionTable.Cols.DURATION + " INTEGER)" )
+            try{
+                db.execSQL("create table " + ArchiveDbSchema.SessionTable.TABLE_NAME + "(" +
+                        ArchiveDbSchema.SessionTable.Cols.NAME + ", " +
+                        ArchiveDbSchema.SessionTable.Cols.DATE + ", " +
+                        ArchiveDbSchema.SessionTable.Cols.TIME + ", " +
+                        ArchiveDbSchema.SessionTable.Cols.DURATION + ")" )
 
-            db.execSQL("create table" + ArchiveDbSchema.PosesInSessionTable.TABLE_NAME + "(" +
-                    " _id integer primary key autoincrement, " +
-                    "FOREIGN KEY(" + ArchiveDbSchema.PosesInSessionTable.Cols.SESSION_ID +
-                    ") REFERENCES " + ArchiveDbSchema.SessionTable.TABLE_NAME + "(_id), " +
-                    ArchiveDbSchema.PosesInSessionTable.Cols.DURATION + " INTEGER, " +
-                    ArchiveDbSchema.PosesInSessionTable.Cols.NUMBER_IN_SEQUENCE + " INTEGER)" )
+                db.execSQL("create table " + ArchiveDbSchema.PosesInSessionTable.TABLE_NAME + " (" +
+                        " _id integer primary key autoincrement, " +
+                        ArchiveDbSchema.PosesInSessionTable.Cols.SESSION_ID + ", " +
+                        ArchiveDbSchema.PosesInSessionTable.Cols.DURATION + ", " +
+                        ArchiveDbSchema.PosesInSessionTable.Cols.NUMBER_IN_SEQUENCE + ", " +
+                        "FOREIGN KEY (" + ArchiveDbSchema.PosesInSessionTable.Cols.SESSION_ID +
+                        ") REFERENCES " + ArchiveDbSchema.SessionTable.TABLE_NAME + " (rowid))" )
+            }
+            catch(e:Exception)
+            {
+                Log.d("SQL_creation", e.message)
+                e.printStackTrace()
+            }
 
         }
 
     }
 
     override fun onUpgrade(db: SQLiteDatabase?, oldVersion: Int, newVersion: Int) {
+        db?.execSQL("DROP TABLE IF EXISTS " + ArchiveDbSchema.SessionTable.TABLE_NAME)
+        db?.execSQL("DROP TABLE IF EXISTS " + ArchiveDbSchema.PosesInSessionTable.TABLE_NAME)
+
+        onCreate(db)
     }
 
 
