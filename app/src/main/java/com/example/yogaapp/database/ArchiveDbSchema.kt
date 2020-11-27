@@ -1,33 +1,33 @@
 package com.example.yogaapp.database
 
 class ArchiveDbSchema {
-    public class SessionTable {
+    class SessionTable {
         companion object{
-            public val TABLE_NAME = "sessions"
+            const val TABLE_NAME = "sessions"
         }
 
-        public class Cols {
+        class Cols {
             companion object{
-                public val ID: String = "id"
-                public val DATE: String = "date"
-                public val DURATION: String = "duration"
-                public val TIME: String = "time"
-                public val NAME: String = "name"
+                const val ID: String = "id"
+                const val DATE: String = "date"
+                const val DURATION: String = "duration"
+                const val TIME: String = "time"
+                const val NAME: String = "name"
             }
         }
     }
 
-    public class PosesInSessionTable {
+    class PosesInSessionTable {
         companion object{
-            public val TABLE_NAME = "poseinsession"
+            const val TABLE_NAME = "poseinsession"
         }
 
-        public class Cols {
+        class Cols {
             companion object{
-                public val POSE_NAME: String = "posename"
-                public val SESSION_ID: String = "sessionid"
-                public val DURATION: String = "duration"
-                public val NUMBER_IN_SEQUENCE: String = "numberinsequence"
+                const val POSE_NAME: String = "posename"
+                const val SESSION_ID: String = "sessionid"
+                const val DURATION: String = "duration"
+                const val NUMBER_IN_SEQUENCE: String = "numberinsequence"
             }
         }
     }

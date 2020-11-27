@@ -6,7 +6,6 @@ import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
-import android.os.SystemClock
 import android.util.Size
 import androidx.camera.core.ImageAnalysis
 import androidx.camera.core.ImageProxy
@@ -157,34 +156,34 @@ class PoseEstimator(context: Context, private val type:String,
         val scoresArray = FloatArray(16)
         for (i in 0 until 16){
             CoroutineScope(Default).launch{
-                var max_value = 0F
-                var max_x = 0F
-                var max_y = 0F
+                var maxValue = 0F
+                var maxX = 0F
+                var maxY = 0F
                 for (row in 0 until inputSize.height) {
                     for (col in 0 until inputSize.width) {
                         val value = outputBuffer.getFloatValue(i + 16 * col + 16 * inputSize.width * row)
-                        if (value > max_value) {
-                            max_value = value
-                            max_x = col.toFloat()
-                            max_y = row.toFloat()
+                        if (value > maxValue) {
+                            maxValue = value
+                            maxX = col.toFloat()
+                            maxY = row.toFloat()
                         }
                     }
                 }
                 var xOffset = 0
                 var yOffset = 0
-                var Ratio = 0F
+                var ratio = 0F
                 if (bitmap.height > bitmap.width) {
                     xOffset = (bitmap.height - bitmap.width) / 2
                     yOffset = 0
-                    Ratio = bitmap.height.toFloat() / inputSize.height.toFloat()
+                    ratio = bitmap.height.toFloat() / inputSize.height.toFloat()
                 } else {
                     xOffset = 0
                     yOffset = (bitmap.width - bitmap.height) / 2
-                    Ratio = bitmap.width.toFloat() / inputSize.width.toFloat()
+                    ratio = bitmap.width.toFloat() / inputSize.width.toFloat()
                 }
-                pointsArray[2 * i] = max_x * Ratio - xOffset
-                pointsArray[2 * i + 1] = max_y * Ratio - yOffset
-                scoresArray[i] = max_value
+                pointsArray[2 * i] = maxX * ratio - xOffset
+                pointsArray[2 * i + 1] = maxY * ratio - yOffset
+                scoresArray[i] = maxValue
             }.join()
         }
 
@@ -301,7 +300,7 @@ class PoseEstimator(context: Context, private val type:String,
 
 
     fun releaseResources(){
-        while (analysisInProgrss){val pass: Unit = Unit}
+        while (analysisInProgrss){val pass = Unit}
         if (this::model_I.isInitialized){model_I.close()}
         if (this::model_II.isInitialized){model_II.close()}
         if (this::model_III.isInitialized){model_III.close()}

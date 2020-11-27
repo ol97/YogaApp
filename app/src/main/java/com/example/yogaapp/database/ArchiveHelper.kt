@@ -2,16 +2,15 @@ package com.example.yogaapp.database
 
 import android.content.ContentValues
 import android.content.Context
-import android.database.Cursor
 import android.util.Log
 import java.lang.Exception
 import java.text.SimpleDateFormat
 import java.util.*
 
-public class ArchiveHelper(context: Context) {
+class ArchiveHelper(context: Context) {
     private val database = Archive(context).writableDatabase
 
-    public fun insertSession(listOfPoses: List<Pair<String, Long>>, name: String): Boolean{
+    fun insertSession(listOfPoses: List<Pair<String, Long>>, name: String): Boolean{
         var ok = true
         try
         {
@@ -50,31 +49,40 @@ public class ArchiveHelper(context: Context) {
     }
 
 
-    public fun readBasicSessionData(): List<Array<String>> {
-        val cursor = database.query(false, ArchiveDbSchema.SessionTable.TABLE_NAME,
-            null, null, null, null, null ,
-            ArchiveDbSchema.SessionTable.Cols.ID +" desc", null, null)
-        val list = mutableListOf<Array<String>>()
-        if (cursor.moveToFirst())
+    fun readSessions(): List<Array<String>> {
+        try
         {
-            do
+            val cursor = database.query(false, ArchiveDbSchema.SessionTable.TABLE_NAME,
+                    null, null, null, null, null ,
+                    ArchiveDbSchema.SessionTable.Cols.ID +" desc", null, null)
+            val list = mutableListOf<Array<String>>()
+            if (cursor.moveToFirst())
             {
-                val name = cursor.getString(cursor.getColumnIndex(ArchiveDbSchema.SessionTable.Cols.NAME))
-                val date = cursor.getString(cursor.getColumnIndex(ArchiveDbSchema.SessionTable.Cols.DATE))
-                val time = cursor.getString(cursor.getColumnIndex(ArchiveDbSchema.SessionTable.Cols.TIME))
-                val duration = cursor.getString(cursor.getColumnIndex(ArchiveDbSchema.SessionTable.Cols.DURATION))
-                val id = cursor.getString(cursor.getColumnIndex(ArchiveDbSchema.SessionTable.Cols.ID))
+                do
+                {
+                    val name = cursor.getString(cursor.getColumnIndex(ArchiveDbSchema.SessionTable.Cols.NAME))
+                    val date = cursor.getString(cursor.getColumnIndex(ArchiveDbSchema.SessionTable.Cols.DATE))
+                    val time = cursor.getString(cursor.getColumnIndex(ArchiveDbSchema.SessionTable.Cols.TIME))
+                    val duration = cursor.getString(cursor.getColumnIndex(ArchiveDbSchema.SessionTable.Cols.DURATION))
+                    val id = cursor.getString(cursor.getColumnIndex(ArchiveDbSchema.SessionTable.Cols.ID))
 
-                list.add(arrayOf(id, name, date, time, duration))
+                    list.add(arrayOf(id, name, date, time, duration))
+                }
+                while (cursor.moveToNext())
             }
-            while (cursor.moveToNext())
+            cursor.close()
+            return list
         }
-        cursor.close()
-        return list
+        catch (e:Exception)
+        {
+            Log.d("SQL", e.message)
+            e.printStackTrace()
+            return mutableListOf()
+        }
     }
 
 
-    public fun readDetailedSessionData(sessionId: String): List<Array<String>>{
+    fun readDetailedSessionData(sessionId: String): List<Array<String>>{
         val list = mutableListOf<Array<String>>()
         try {
 
@@ -111,12 +119,14 @@ public class ArchiveHelper(context: Context) {
         return list
     }
 
-    public fun changeSessionName(newName:String, sessionId: String):Boolean{
-        var ok: Boolean = true
+    fun changeSessionName(newName:String, sessionId: String):Boolean{
+        var ok = true
         val values = ContentValues()
         values.put(ArchiveDbSchema.SessionTable.Cols.NAME, newName)
         try{
-            database.update(ArchiveDbSchema.SessionTable.TABLE_NAME, values, ArchiveDbSchema.SessionTable.Cols.NAME+" = ?", arrayOf(sessionId))
+            val a = database.update(ArchiveDbSchema.SessionTable.TABLE_NAME, values,
+                    ArchiveDbSchema.SessionTable.Cols.ID+" = CAST(? AS INTEGER)", arrayOf(sessionId))
+            Log.d("ALW", a.toString())
         }
         catch (e: Exception)
         {
@@ -127,13 +137,14 @@ public class ArchiveHelper(context: Context) {
         return ok
     }
 
-    public fun deleteSession(sessionKey: String): Boolean{
+    fun deleteSession(sessionKey: String): Boolean{
         var ok = true
         try{
             database.delete(ArchiveDbSchema.PosesInSessionTable.TABLE_NAME,
-           ArchiveDbSchema.PosesInSessionTable.Cols.SESSION_ID + " = ?", arrayOf(sessionKey))
-            database.delete(ArchiveDbSchema.SessionTable.TABLE_NAME, "rowid = ?",
-            arrayOf(sessionKey))
+           ArchiveDbSchema.PosesInSessionTable.Cols.SESSION_ID + " = CAST(? AS INTEGER)", arrayOf(sessionKey))
+            database.delete(ArchiveDbSchema.SessionTable.TABLE_NAME,
+                    ArchiveDbSchema.SessionTable.Cols.ID + "= CAST(? AS INTEGER)",
+                    arrayOf(sessionKey))
         }
         catch(e: Exception)
         {
@@ -144,14 +155,39 @@ public class ArchiveHelper(context: Context) {
         return ok
     }
 
+    fun readSessionData(sessionId: String): Array<String> {
+        val cursor = database.query(false, ArchiveDbSchema.SessionTable.TABLE_NAME,
+                null,
+                ArchiveDbSchema.SessionTable.Cols.ID + " = CAST(? AS INTEGER)",
+                arrayOf(sessionId), null, null ,
+                ArchiveDbSchema.SessionTable.Cols.ID +" desc", null, null)
+        if (cursor.moveToFirst())
+        {
+            val name = cursor.getString(cursor.getColumnIndex(ArchiveDbSchema.SessionTable.Cols.NAME))
+            val date = cursor.getString(cursor.getColumnIndex(ArchiveDbSchema.SessionTable.Cols.DATE))
+            val time = cursor.getString(cursor.getColumnIndex(ArchiveDbSchema.SessionTable.Cols.TIME))
+            val duration = cursor.getString(cursor.getColumnIndex(ArchiveDbSchema.SessionTable.Cols.DURATION))
+            val id = cursor.getString(cursor.getColumnIndex(ArchiveDbSchema.SessionTable.Cols.ID))
+
+            cursor.close()
+            return arrayOf(id, name, date, time, duration)
+        }
+        else
+        {
+            cursor.close()
+            return arrayOf()
+        }
+    }
+
     companion object{
         private var instance: ArchiveHelper? = null
-        public fun getInstance(context: Context): ArchiveHelper? {
-            if (instance == null){
+        fun getInstance(context: Context): ArchiveHelper? {
+            return if (instance == null){
                 instance = ArchiveHelper(context)
-                return instance
+                instance
+            } else {
+                instance
             }
-            else {return instance}
         }
     }
 }

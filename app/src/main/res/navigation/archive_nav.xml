@@ -21,6 +21,9 @@
         tools:layout="@layout/fragment_session_details" >
         <action
             android:id="@+id/action_sessionDetailsFragment_to_itemListFragment"
+            app:launchSingleTop="true"
+            app:popUpTo="@+id/archive_nav"
+            app:popUpToInclusive="true"
             app:destination="@id/itemListFragment" />
         <argument
             android:name="sessionid"

@@ -14,15 +14,13 @@ import android.util.DisplayMetrics
 import android.util.Log
 import android.util.Size
 import android.view.*
-import androidx.fragment.app.Fragment
-import android.widget.ImageButton
-import android.widget.TextView
-import android.widget.Toast
-import android.widget.ToggleButton
+import android.widget.*
+import androidx.appcompat.app.AlertDialog
 import androidx.camera.core.CameraSelector
 import androidx.camera.core.ImageAnalysis
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.core.content.ContextCompat
+import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.findNavController
 import androidx.preference.PreferenceManager
 import com.example.yogaapp.database.ArchiveHelper
@@ -62,8 +60,8 @@ class AnalyzerFragment : Fragment() {
 
 
     override fun onCreateView(
-        inflater: LayoutInflater, container: ViewGroup?,
-        savedInstanceState: Bundle?
+            inflater: LayoutInflater, container: ViewGroup?,
+            savedInstanceState: Bundle?
     ): View? {
         return inflater.inflate(R.layout.fragment_analyzer, container, false)
     }
@@ -88,20 +86,34 @@ class AnalyzerFragment : Fragment() {
             }
             if (!isChecked && listOfPoses.lastIndex > 2)
             {
-                context?.let {
-                    val archiveHelper = ArchiveHelper.getInstance(it)
-                    val ok = archiveHelper?.insertSession(filterListOfPoses(listOfPoses), "test1")
-                    if (!ok!!)
-                    {
-                        val t = Toast.makeText(context, "Saving failed!", Toast.LENGTH_SHORT)
-                        t.show()
+
+                val alert = context?.let { it1 -> AlertDialog.Builder(it1) }
+                alert?.setTitle("Set name")
+                alert?.setMessage("Insert name")
+
+                val input = EditText(context)
+                alert?.setView(input)
+
+                alert?.setPositiveButton("Save") { dialog, whichButton ->
+                    val value = input.text.toString()
+                    context?.let {
+                        val archiveHelper = ArchiveHelper.getInstance(it)
+                        val ok = archiveHelper?.insertSession(filterListOfPoses(listOfPoses), value)
+                        if (!ok!!) {
+                            val t = Toast.makeText(context, "Saving failed!", Toast.LENGTH_SHORT)
+                            t.show()
+                        } else {
+                            val t = Toast.makeText(context, "Saving succeeded!", Toast.LENGTH_SHORT)
+                            t.show()
+                        }
                     }
-                    else
-                    {
-                        val t = Toast.makeText(context, "Saving succeeded!", Toast.LENGTH_SHORT)
-                        t.show()
-                    }
+
                 }
+
+                alert?.setNegativeButton("Cancel"
+                ) { dialog, which ->
+                }
+                alert?.show()
             }
         }
         loadSettings()
@@ -142,8 +154,8 @@ class AnalyzerFragment : Fragment() {
         }
 
         analyzer = PoseEstimator(
-            requireContext(),
-            modelType, this)
+                requireContext(),
+                modelType, this)
         analyzer.updateThreshold(confidenceThreshold)
 
         if (allPermissionsGranted()) {
@@ -151,7 +163,7 @@ class AnalyzerFragment : Fragment() {
         }
         else{
             requestPermissions(
-                REQUIRED_PERMISSIONS, REQUEST_CODE_PERMISSIONS
+                    REQUIRED_PERMISSIONS, REQUEST_CODE_PERMISSIONS
             )
         }
         lastUpdated = SystemClock.uptimeMillis()
@@ -199,7 +211,7 @@ class AnalyzerFragment : Fragment() {
         }
 
         orientationListener = object : OrientationEventListener(context,
-            SensorManager.SENSOR_DELAY_NORMAL) {
+                SensorManager.SENSOR_DELAY_NORMAL) {
             override fun onOrientationChanged(orientation: Int) {
                 if(lensFacing == CameraSelector.DEFAULT_BACK_CAMERA){
                     rotation = orientation
@@ -283,18 +295,18 @@ class AnalyzerFragment : Fragment() {
                 canvas.drawColor(Color.BLACK)
                 if (displayWidth < displayHeight){
                     val scale = canvas.width.toFloat()/bitmap.width.toFloat()
-                    val dst = RectF(0F,(canvas.height - bitmap.height.toFloat()*scale)/2, displayWidth.toFloat(),
-                        canvas.height - (canvas.height - bitmap.height.toFloat()*scale)/2)
-                    canvas.drawBitmap(bitmap, null, dst ,null)
+                    val dst = RectF(0F, (canvas.height - bitmap.height.toFloat() * scale) / 2, displayWidth.toFloat(),
+                            canvas.height - (canvas.height - bitmap.height.toFloat() * scale) / 2)
+                    canvas.drawBitmap(bitmap, null, dst, null)
                 }
                 if (displayWidth >= displayHeight){
                     val scale = canvas.height.toFloat()/bitmap.height.toFloat()
-                    val dst = RectF( (canvas.width - bitmap.width*scale)/2, 0F,
-                        canvas.width - (canvas.width - bitmap.width*scale)/2, canvas.height.toFloat())
-                    canvas.drawBitmap(bitmap, null, dst ,null)
+                    val dst = RectF((canvas.width - bitmap.width * scale) / 2, 0F,
+                            canvas.width - (canvas.width - bitmap.width * scale) / 2, canvas.height.toFloat())
+                    canvas.drawBitmap(bitmap, null, dst, null)
                 }
                 textureView.unlockCanvasAndPost(canvas)
-            } catch(e:Exception){
+            } catch (e: Exception){
                 Log.d("TextureView", e.message)
             }
             if (lensFacing == CameraSelector.DEFAULT_BACK_CAMERA) {
@@ -303,10 +315,10 @@ class AnalyzerFragment : Fragment() {
                 textureView.scaleX = -1F
             }
 
-            textViewFPS.setText("Time Per Frame: " +
-                    (timestamp - lastUpdated).toString() + "ms")
-            textViewPoseConfidence.setText("Confidence: " + (round(confidence * 10000) / 100).toString() + "%")
-            textViewPose.setText("Pose: " + pose)
+            textViewFPS.text = "Time Per Frame: " +
+                    (timestamp - lastUpdated).toString() + "ms"
+            textViewPoseConfidence.text = "Confidence: " + (round(confidence * 10000) / 100).toString() + "%"
+            textViewPose.text = "Pose: " + pose
             lastUpdated = timestamp
         }
     }
@@ -321,17 +333,17 @@ class AnalyzerFragment : Fragment() {
 
 
     override fun onRequestPermissionsResult(
-        requestCode: Int, permissions: Array<String>, grantResults:
-        IntArray
+            requestCode: Int, permissions: Array<String>, grantResults:
+            IntArray
     ) {
         if (requestCode == REQUEST_CODE_PERMISSIONS) {
             if (allPermissionsGranted()) {
                 startCamera()
             } else {
                 Toast.makeText(
-                    context,
-                    "Permissions not granted by the user.",
-                    Toast.LENGTH_SHORT
+                        context,
+                        "Permissions not granted by the user.",
+                        Toast.LENGTH_SHORT
                 ).show()
                 activity?.finish()
             }
@@ -342,10 +354,9 @@ class AnalyzerFragment : Fragment() {
     private fun startCamera() {
         val cameraProviderFuture = context?.let { ProcessCameraProvider.getInstance(it) }
 
-        if (cameraProviderFuture != null) {
-            cameraProviderFuture.addListener({
-                val cameraProvider: ProcessCameraProvider = cameraProviderFuture.get()
-                val imageAnalyzer = ImageAnalysis.Builder()
+        cameraProviderFuture?.addListener({
+            val cameraProvider: ProcessCameraProvider = cameraProviderFuture.get()
+            val imageAnalyzer = ImageAnalysis.Builder()
                     .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
                     .setTargetResolution(targetSize)
                     .build()
@@ -353,17 +364,16 @@ class AnalyzerFragment : Fragment() {
                         it.setAnalyzer(cameraExecutor, analyzer)
                     }
 
-                try {
-                    cameraProvider.unbindAll()
-                    cameraProvider.bindToLifecycle(
+            try {
+                cameraProvider.unbindAll()
+                cameraProvider.bindToLifecycle(
                         this, lensFacing, imageAnalyzer)
 
-                } catch (exc: Exception) {
-                    Log.e(TAG, "Use case binding failed", exc)
-                }
+            } catch (exc: Exception) {
+                Log.e(TAG, "Use case binding failed", exc)
+            }
 
-            }, ContextCompat.getMainExecutor(context))
-        }
+        }, ContextCompat.getMainExecutor(context))
     }
 
     private fun filterListOfPoses(listOfPoses: List<Pair<String, Long>>):List<Pair<String, Long>>
@@ -379,7 +389,7 @@ class AnalyzerFragment : Fragment() {
         {
             if ( i > 0 )
             {
-                if (listOfPoses[i].first != listOfPoses[i-1].first)
+                if (listOfPoses[i].first != listOfPoses[i - 1].first)
                 {
                     temporaryList1.add(listOfPoses[i])
                 }
@@ -408,7 +418,7 @@ class AnalyzerFragment : Fragment() {
         {
             if ( i > 0 )
             {
-                if (temporaryList2[i].first != temporaryList2[i-1].first)
+                if (temporaryList2[i].first != temporaryList2[i - 1].first)
                 {
                     temporaryList1.add(temporaryList2[i])
                 }
@@ -424,7 +434,7 @@ class AnalyzerFragment : Fragment() {
         {
             if (i < temporaryList1.lastIndex)
             {
-                finalList.add(Pair(temporaryList1[i].first, temporaryList1[i+1].second - temporaryList1[i].second))
+                finalList.add(Pair(temporaryList1[i].first, temporaryList1[i + 1].second - temporaryList1[i].second))
             }
             else
             {
