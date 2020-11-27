@@ -277,7 +277,7 @@ class PoseEstimator(context: Context, private val type:String,
         }
 
         for (i in 0 until 16){
-            if (scoresArray[i] >= confidenceThreshold){
+            if (scoresArray[i]*100 >= confidenceThreshold){
                 inputArray[i*2] = (xArray[i] - mean[2*i])/std[2*i]
                 inputArray[i*2+1] = (yArray[i] - mean[2*i+1])/std[2*i+1]
             }

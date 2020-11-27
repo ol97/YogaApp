@@ -392,16 +392,14 @@ class AnalyzerFragment : Fragment() {
 
         for (i in temporaryList1.indices)
         {
-            if (i > 0)
+            if (i > 0) {
+                if ((temporaryList1[i].second - temporaryList1[i - 1].second) >= timeThreshold * 1000) {
+                    temporaryList2.add(temporaryList1[i])
+                }
+            }
+            else if (i == 0)
             {
-                if ((temporaryList1[i].second - temporaryList1[i-1].second) >= timeThreshold*1000)
-                {
-                    temporaryList2.add(temporaryList1[i])
-                }
-                else if (i == 0)
-                {
-                    temporaryList2.add(temporaryList1[i])
-                }
+                temporaryList2.add(temporaryList1[i])
             }
         }
 
@@ -412,12 +410,12 @@ class AnalyzerFragment : Fragment() {
             {
                 if (temporaryList2[i].first != temporaryList2[i-1].first)
                 {
-                    temporaryList1.add(listOfPoses[i])
+                    temporaryList1.add(temporaryList2[i])
                 }
             }
             if (i == 0)
             {
-                temporaryList1.add(listOfPoses[i])
+                temporaryList1.add(temporaryList2[i])
             }
         }
 
