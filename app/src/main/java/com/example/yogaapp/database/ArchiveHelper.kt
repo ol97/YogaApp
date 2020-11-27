@@ -32,11 +32,12 @@ public class ArchiveHelper(context: Context) {
             for ((i, pair) in listOfPoses.withIndex()){
                 values.clear()
                 values.put(ArchiveDbSchema.PosesInSessionTable.Cols.POSE_NAME, pair.first)
-                values.put(ArchiveDbSchema.PosesInSessionTable.Cols.DURATION, pair.second)
-                values.put(ArchiveDbSchema.PosesInSessionTable.Cols.NUMBER_IN_SEQUENCE, i)
-                values.put(ArchiveDbSchema.PosesInSessionTable.Cols.SESSION_ID, sessionId)
+                values.put(ArchiveDbSchema.PosesInSessionTable.Cols.DURATION, pair.second.toString())
+                values.put(ArchiveDbSchema.PosesInSessionTable.Cols.NUMBER_IN_SEQUENCE, i.toString())
+                values.put(ArchiveDbSchema.PosesInSessionTable.Cols.SESSION_ID, sessionId.toString())
 
-                database.insert(ArchiveDbSchema.PosesInSessionTable.TABLE_NAME, null ,values)
+                val rowid = database.insertOrThrow(ArchiveDbSchema.PosesInSessionTable.TABLE_NAME, null, values)
+
             }
         }
         catch(e: Exception)
@@ -73,46 +74,49 @@ public class ArchiveHelper(context: Context) {
     }
 
 
-    public fun readDetailedSessionData(sessionKey: String): List<Array<String>>{
-        val cursor = database.rawQuery("Select * from " +
-                ArchiveDbSchema.PosesInSessionTable.TABLE_NAME + " join " +
-                ArchiveDbSchema.SessionTable.TABLE_NAME +
-                " where id =  ?", arrayOf(sessionKey))
-
+    public fun readDetailedSessionData(sessionId: String): List<Array<String>>{
         val list = mutableListOf<Array<String>>()
-        if (cursor.moveToFirst())
-        {
-            do
-            {
-                val sessionName = cursor.getString(
-                        cursor.getColumnIndex(ArchiveDbSchema.SessionTable.TABLE_NAME +
-                                "." + ArchiveDbSchema.SessionTable.Cols.NAME))
-                val date = cursor.getString(cursor.getColumnIndex(ArchiveDbSchema.SessionTable.Cols.DATE))
-                val sessionTime = cursor.getString(cursor.getColumnIndex(
-                        ArchiveDbSchema.SessionTable.TABLE_NAME + "."
-                                +ArchiveDbSchema.SessionTable.Cols.TIME))
-                val sessionDuration = cursor.getString(cursor.getColumnIndex(ArchiveDbSchema.SessionTable.Cols.DURATION))
-                val rowid = cursor.getString(cursor.getColumnIndex("rowid"))
-                val numberInSequence = cursor.getString(cursor.getColumnIndex(ArchiveDbSchema.PosesInSessionTable.Cols.NUMBER_IN_SEQUENCE))
-                val poseDuration = cursor.getString(cursor.getColumnIndex(
-                        ArchiveDbSchema.PosesInSessionTable.TABLE_NAME + "," +
-                                ArchiveDbSchema.PosesInSessionTable.Cols.DURATION))
-                val poseName = cursor.getString(cursor.getColumnIndex(ArchiveDbSchema.PosesInSessionTable.Cols.POSE_NAME))
+        try {
 
-                list.add(arrayOf(rowid, sessionName, date, sessionTime, sessionDuration, poseName, numberInSequence, poseDuration))
+            val distinct = false
+            val table = ArchiveDbSchema.PosesInSessionTable.TABLE_NAME
+            val columns = null
+            val selection = ArchiveDbSchema.PosesInSessionTable.Cols.SESSION_ID + " = CAST(? AS INTEGER)"
+            val selectionArgs = arrayOf(sessionId)
+            val groupBy = null
+            val having = null
+            val orderBy = "CAST(" + ArchiveDbSchema.PosesInSessionTable.Cols.NUMBER_IN_SEQUENCE + " AS INTEGER)" + " asc"
+            val limit = null
+
+            val cursor = database.query(distinct, table, columns, selection, selectionArgs, groupBy, having, orderBy, limit)
+            if (cursor.moveToFirst())
+            {
+                do
+                {
+                    val numberInSequence = cursor.getString(cursor.getColumnIndex(ArchiveDbSchema.PosesInSessionTable.Cols.NUMBER_IN_SEQUENCE))
+                    val poseDuration = cursor.getString(cursor.getColumnIndex(ArchiveDbSchema.PosesInSessionTable.Cols.DURATION))
+                    val poseName = cursor.getString(cursor.getColumnIndex(ArchiveDbSchema.PosesInSessionTable.Cols.POSE_NAME))
+
+                    list.add(arrayOf(numberInSequence, poseName, poseDuration))
+                }
+                while (cursor.moveToNext())
             }
-            while (cursor.moveToNext())
+            cursor.close()
         }
-        cursor.close()
+        catch (e:Exception){
+            e.printStackTrace()
+            Log.d("SQL", e.message)
+        }
+
         return list
     }
 
-    public fun changeSessionName(newName:String, rowid: String):Boolean{
+    public fun changeSessionName(newName:String, sessionId: String):Boolean{
         var ok: Boolean = true
         val values = ContentValues()
         values.put(ArchiveDbSchema.SessionTable.Cols.NAME, newName)
         try{
-            database.update(ArchiveDbSchema.SessionTable.TABLE_NAME, values, "rowid = ?", arrayOf(rowid))
+            database.update(ArchiveDbSchema.SessionTable.TABLE_NAME, values, ArchiveDbSchema.SessionTable.Cols.NAME+" = ?", arrayOf(sessionId))
         }
         catch (e: Exception)
         {

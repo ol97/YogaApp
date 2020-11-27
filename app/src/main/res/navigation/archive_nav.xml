@@ -25,5 +25,16 @@
         <argument
             android:name="sessionid"
             app:argType="string" />
+        <argument android:name="date"
+            app:argType="string" />
+        <argument
+            android:name="hour"
+            app:argType="string" />
+        <argument
+            android:name="duration"
+            app:argType="string" />
+        <argument
+            android:name="name"
+            app:argType="string" />
     </fragment>
 </navigation>

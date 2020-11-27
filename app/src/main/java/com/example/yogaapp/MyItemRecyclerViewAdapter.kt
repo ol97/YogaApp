@@ -28,6 +28,10 @@ class MyItemRecyclerViewAdapter(
         holder.textViewDate.text = item[2]
         holder.textViewHour.text = item[3]
         holder.id = item[0]
+        holder.name = item[1]
+        holder.date = item[2]
+        holder.hour = item[3]
+        holder.duration = item[4]
 
     }
 
@@ -37,7 +41,13 @@ class MyItemRecyclerViewAdapter(
         val textViewDate: TextView = view.findViewById(R.id.textViewDate)
         val textViewHour: TextView = view.findViewById(R.id.textViewHour)
         val textViewName: TextView = view.findViewById(R.id.textViewName)
-        public lateinit var id: String
+
+        lateinit var id: String
+        lateinit var date: String
+        lateinit var hour: String
+        lateinit var name: String
+        lateinit var duration: String
+
 
         init {
             itemView.setOnClickListener(this)
@@ -47,9 +57,9 @@ class MyItemRecyclerViewAdapter(
             val navController = v?.let { Navigation.findNavController(it) }
 
             if (navController != null) {
-                navController.navigate(ItemListFragmentDirections.actionItemListFragmentToSessionDetailsFragment(id))
+                navController.navigate(ItemListFragmentDirections.actionItemListFragmentToSessionDetailsFragment(id, date, hour, duration, name))
             }
-            Log.d("AAA", "123")
+
         }
 
     }

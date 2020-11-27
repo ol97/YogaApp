@@ -229,7 +229,7 @@ class PoseEstimator(context: Context, private val type:String,
             7 -> {pose = "Plank Pose"}
             8 -> {pose = "Chair Pose"}
             9 -> {pose = "Garland Pose"}
-            10 -> {pose = "Unknown"}
+            10 -> {pose = "Unknown Pose"}
         }
         return Pair(pose, maxConfidence)
     }

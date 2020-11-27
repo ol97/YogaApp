@@ -21,9 +21,10 @@ class Archive(context: Context) : SQLiteOpenHelper(context,"Archive.db", null, 1
 
                 db.execSQL("create table " + ArchiveDbSchema.PosesInSessionTable.TABLE_NAME + " (" +
                         " id integer primary key autoincrement, " +
-                        ArchiveDbSchema.PosesInSessionTable.Cols.SESSION_ID + ", " +
                         ArchiveDbSchema.PosesInSessionTable.Cols.DURATION + ", " +
+                        ArchiveDbSchema.PosesInSessionTable.Cols.POSE_NAME + ", " +
                         ArchiveDbSchema.PosesInSessionTable.Cols.NUMBER_IN_SEQUENCE + ", " +
+                        ArchiveDbSchema.PosesInSessionTable.Cols.SESSION_ID + ", " +
                         "FOREIGN KEY (" + ArchiveDbSchema.PosesInSessionTable.Cols.SESSION_ID +
                         ") REFERENCES " + ArchiveDbSchema.SessionTable.TABLE_NAME + " (id))" )
             }
