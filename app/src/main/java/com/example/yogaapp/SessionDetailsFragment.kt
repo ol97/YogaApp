@@ -118,6 +118,7 @@ class SessionDetailsFragment : Fragment() {
         val detailedData = context?.let {
             ArchiveHelper.getInstance(it)?.readDetailedSessionData(args.sessionid) }
 
+        textViewPoses.text = ""
         for (i in detailedData!!.indices)
         {
             val oldText = textViewPoses.text

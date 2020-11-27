@@ -179,6 +179,7 @@ class ArchiveHelper(context: Context) {
         }
     }
 
+
     companion object{
         private var instance: ArchiveHelper? = null
         fun getInstance(context: Context): ArchiveHelper? {
