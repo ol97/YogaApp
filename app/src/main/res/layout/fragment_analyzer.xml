@@ -9,19 +9,27 @@
         android:id="@+id/textureView"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
+        android:elevation="0dp"
         android:gravity="center" />
 
     <LinearLayout
+        android:id="@+id/layout_top"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="top|left"
-        android:padding="16dp"
+        android:background="@color/black"
+        android:elevation="1dp"
+        android:paddingBottom="8dp"
+        android:paddingRight="8dp"
+        android:paddingLeft="16dp"
+        android:paddingTop="16dp"
         android:orientation="vertical">
 
         <TextView
             android:id="@+id/textViewFPS"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:elevation="1dp"
             android:padding="8dp"
             android:text="Time Per Frame:" />
 
@@ -29,6 +37,7 @@
             android:id="@+id/textViewPose"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:elevation="1dp"
             android:padding="8dp"
             android:text="Pose:" />
 
@@ -36,20 +45,25 @@
             android:id="@+id/textViewPoseConfidence"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:elevation="1dp"
             android:padding="8dp"
             android:text="Confidence:" />
     </LinearLayout>
 
     <LinearLayout
+        android:id="@+id/layout_bottom"
         android:layout_alignParentBottom="true"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:background="@color/black"
+        android:elevation="1dp"
         android:orientation="horizontal">
 
         <ImageButton
             android:id="@+id/imageButtonSwitchCamera"
             android:layout_width="wrap_content"
             android:layout_height="match_parent"
+            android:elevation="1dp"
             android:layout_weight="0"
             android:padding="16dp"
             android:src="@drawable/ic_baseline_flip_camera_ios_24" />
@@ -59,6 +73,7 @@
             android:id="@+id/toggleButtonRecord"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:elevation="1dp"
             android:layout_weight="1"
             android:padding="16dp"
             android:textOff="Start recording"
@@ -69,6 +84,7 @@
             android:id="@+id/imageButtonSettings"
             android:layout_width="wrap_content"
             android:layout_height="match_parent"
+            android:elevation="1dp"
             android:layout_weight="0"
             android:padding="16dp"
             android:src="@drawable/ic_baseline_settings_24" />

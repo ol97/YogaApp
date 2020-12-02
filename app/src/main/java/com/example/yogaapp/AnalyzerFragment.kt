@@ -117,6 +117,13 @@ class AnalyzerFragment : Fragment() {
             }
         }
         loadSettings()
+
+        val layout_top = view.findViewById<LinearLayout>(R.id.layout_top)
+        layout_top.bringToFront()
+        layout_top.invalidate()
+        val layout_bottom = view.findViewById<LinearLayout>(R.id.layout_bottom)
+        layout_bottom.bringToFront()
+        layout_bottom.invalidate()
     }
 
     private fun loadSettings(){
