@@ -12,11 +12,18 @@
         android:orientation="vertical">
 
         <Button
-            android:id="@+id/buttonAnalyzer"
+            android:id="@+id/buttonChallengeMode"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:padding="16dp"
-            android:text="Analyzer" />
+            android:text="Challenge Mode" />
+
+        <Button
+            android:id="@+id/buttonRecorder"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:padding="16dp"
+            android:text="Recorder" />
 
         <Button
             android:id="@+id/buttonHistory"

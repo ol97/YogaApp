@@ -6,14 +6,24 @@ import android.os.Bundle
 import android.widget.Button
 
 class SelectionScreenActivity : AppCompatActivity() {
+    private val ANALYZER_MODE_KEY = "challenge_recorder_mode"
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         supportActionBar?.hide()
         setContentView(R.layout.activity_selection_screen)
 
-        val buttonAnalyzer = findViewById<Button>(R.id.buttonAnalyzer)
-        buttonAnalyzer.setOnClickListener{
+        val buttonChallengeMode = findViewById<Button>(R.id.buttonChallengeMode)
+        buttonChallengeMode.setOnClickListener{
             val intent = Intent(this, AnalyzerActivity::class.java)
+            intent.putExtra(ANALYZER_MODE_KEY, "challenge")
+            startActivity(intent)
+        }
+
+        val buttonRecorder = findViewById<Button>(R.id.buttonRecorder)
+        buttonRecorder.setOnClickListener{
+            val intent = Intent(this, AnalyzerActivity::class.java)
+            intent.putExtra(ANALYZER_MODE_KEY, "recorder")
             startActivity(intent)
         }
 

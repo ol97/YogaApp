@@ -25,7 +25,7 @@ import org.tensorflow.lite.support.tensorbuffer.TensorBuffer
 import kotlin.math.max
 
 class PoseEstimator(context: Context, private val type:String,
-                    private val analyzerFragment: AnalyzerFragment
+                    private val poseEstimatorUser: PoseEstimatorUser
 ) : ImageAnalysis.Analyzer {
 
     private lateinit var model_I: EfficientPoseI
@@ -132,7 +132,7 @@ class PoseEstimator(context: Context, private val type:String,
         {
             parsingJob = CoroutineScope(Default).launch{
                 parseOutput(inputSize, outputBufferEstimator, bitmap, confidenceThreshold,
-                    analyzerFragment)
+                    poseEstimatorUser)
             }
         }
         else
@@ -140,7 +140,7 @@ class PoseEstimator(context: Context, private val type:String,
             while(!parsingJob!!.isCompleted){val pass = Unit}
             parsingJob = CoroutineScope(Default).launch{
                 parseOutput(inputSize, outputBufferEstimator, bitmap, confidenceThreshold,
-                    analyzerFragment)
+                    poseEstimatorUser)
             }
         }
         analysisInProgrss = false
@@ -148,7 +148,7 @@ class PoseEstimator(context: Context, private val type:String,
     }
 
     private suspend fun parseOutput(inputSize: Size, outputBuffer: TensorBuffer, bitmap: Bitmap,
-                                    confidenceThreshold: Int, analyzerFragment: AnalyzerFragment){
+                                    confidenceThreshold: Int, poseEstimatorUser: PoseEstimatorUser){
         val pointsArray = FloatArray(32)
         val xArray = FloatArray(16)
         val yArray = FloatArray(16)
@@ -190,7 +190,7 @@ class PoseEstimator(context: Context, private val type:String,
         val classifierOutput = classifyPose(inputArray)
 
 
-        analyzerFragment.update(drawPoints(bitmap,pointsArray,scoresArray),
+        poseEstimatorUser.update(drawPoints(bitmap,pointsArray,scoresArray),
             classifierOutput.first, classifierOutput.second, System.currentTimeMillis())
 
     }

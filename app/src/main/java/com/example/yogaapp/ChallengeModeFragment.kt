@@ -15,22 +15,20 @@ import android.util.Log
 import android.util.Size
 import android.view.*
 import android.widget.*
-import androidx.appcompat.app.AlertDialog
+import androidx.fragment.app.Fragment
 import androidx.camera.core.CameraSelector
 import androidx.camera.core.ImageAnalysis
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.core.content.ContextCompat
-import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.findNavController
 import androidx.preference.PreferenceManager
-import com.example.yogaapp.database.ArchiveHelper
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 import kotlin.math.round
 
-class AnalyzerFragment : Fragment() {
 
+class ChallengeModeFragment : Fragment(), PoseEstimatorUser {
     private lateinit var cameraExecutor: ExecutorService
     private lateinit var textureView: TextureView
     private lateinit var textViewFPS: TextView
@@ -40,15 +38,16 @@ class AnalyzerFragment : Fragment() {
     private lateinit var orientationListener: OrientationEventListener
     private lateinit var analyzer:PoseEstimator
     private lateinit var targetSize: Size
-    private lateinit var toggleButtonRecord: ToggleButton
+    private lateinit var buttonNext: Button
     private var lastUpdated:Long = 0
-    private lateinit var imageButtonSwitchCamera:ImageButton
+    private lateinit var imageButtonSwitchCamera: ImageButton
     private var lensFacing = CameraSelector.DEFAULT_BACK_CAMERA
     private val LENS_FACING_KEY: String = "lens_facing"
     private var rotation = 0
     private var displayHeight:Int = 0
     private var displayWidth:Int = 0
-    private lateinit var preferences:SharedPreferences
+    private lateinit var preferences: SharedPreferences
+    private var showFPS: Boolean = true
     private var confidenceThreshold:Int = 20
     private var timeThreshold:Int = 1
     private lateinit var modelType: String
@@ -60,63 +59,25 @@ class AnalyzerFragment : Fragment() {
 
 
     override fun onCreateView(
-            inflater: LayoutInflater, container: ViewGroup?,
-            savedInstanceState: Bundle?
+        inflater: LayoutInflater, container: ViewGroup?,
+        savedInstanceState: Bundle?
     ): View? {
-        return inflater.inflate(R.layout.fragment_analyzer, container, false)
+        return inflater.inflate(R.layout.fragment_challenge_mode, container, false)
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        loadSettings()
         imageButtonSettings = view.findViewById(R.id.imageButtonSettings)
         imageButtonSettings.setOnClickListener {
-            findNavController().navigate(R.id.action_analyzerFragment_to_settingsFragment)
+            findNavController().navigate(R.id.action_challengeModeFragment_to_settingsFragment)
         }
-        textureView = view.findViewById(R.id.textureView)
         textViewFPS = view.findViewById(R.id.textViewFPS)
+        if (showFPS){textViewFPS.visibility = View.VISIBLE}
+        else {textViewFPS.visibility = View.GONE}
+        textureView = view.findViewById(R.id.textureView)
         textViewPoseConfidence = view.findViewById(R.id.textViewPoseConfidence)
         imageButtonSwitchCamera = view.findViewById(R.id.imageButtonSwitchCamera)
         textViewPose = view.findViewById(R.id.textViewPose)
-        toggleButtonRecord = view.findViewById(R.id.toggleButtonRecord)
-        toggleButtonRecord.setOnCheckedChangeListener { buttonView, isChecked ->
-
-            recordingFlag = isChecked
-            if (isChecked)
-            {
-                listOfPoses.clear()
-            }
-            if (!isChecked && listOfPoses.lastIndex > 2)
-            {
-
-                val alert = context?.let { it1 -> AlertDialog.Builder(it1) }
-                alert?.setTitle("Set name")
-                alert?.setMessage("Insert name")
-
-                val input = EditText(context)
-                alert?.setView(input)
-
-                alert?.setPositiveButton("Save") { dialog, whichButton ->
-                    val value = input.text.toString()
-                    context?.let {
-                        val archiveHelper = ArchiveHelper.getInstance(it)
-                        val ok = archiveHelper?.insertSession(filterListOfPoses(listOfPoses), value)
-                        if (!ok!!) {
-                            val t = Toast.makeText(context, "Saving failed!", Toast.LENGTH_SHORT)
-                            t.show()
-                        } else {
-                            val t = Toast.makeText(context, "Saving succeeded!", Toast.LENGTH_SHORT)
-                            t.show()
-                        }
-                    }
-
-                }
-
-                alert?.setNegativeButton("Cancel"
-                ) { dialog, which ->
-                }
-                alert?.show()
-            }
-        }
-        loadSettings()
 
         val layout_top = view.findViewById<LinearLayout>(R.id.layout_top)
         layout_top.bringToFront()
@@ -131,6 +92,7 @@ class AnalyzerFragment : Fragment() {
         confidenceThreshold = preferences.getInt("confidenceThreshold", 20)
         timeThreshold = preferences.getInt("timeThreshold", 1)
         modelType = preferences.getString("modelType", "RT").toString()
+        showFPS = preferences.getBoolean("showFPS", true)
 
     }
 
@@ -161,8 +123,8 @@ class AnalyzerFragment : Fragment() {
         }
 
         analyzer = PoseEstimator(
-                requireContext(),
-                modelType, this)
+            requireContext(),
+            modelType, this)
         analyzer.updateThreshold(confidenceThreshold)
 
         if (allPermissionsGranted()) {
@@ -170,7 +132,7 @@ class AnalyzerFragment : Fragment() {
         }
         else{
             requestPermissions(
-                    REQUIRED_PERMISSIONS, REQUEST_CODE_PERMISSIONS
+                REQUIRED_PERMISSIONS, REQUEST_CODE_PERMISSIONS
             )
         }
         lastUpdated = SystemClock.uptimeMillis()
@@ -218,7 +180,7 @@ class AnalyzerFragment : Fragment() {
         }
 
         orientationListener = object : OrientationEventListener(context,
-                SensorManager.SENSOR_DELAY_NORMAL) {
+            SensorManager.SENSOR_DELAY_NORMAL) {
             override fun onOrientationChanged(orientation: Int) {
                 if(lensFacing == CameraSelector.DEFAULT_BACK_CAMERA){
                     rotation = orientation
@@ -286,7 +248,7 @@ class AnalyzerFragment : Fragment() {
         }
     }
 
-    fun update(bitmap: Bitmap, pose: String, confidence: Float, timestamp: Long){
+    override fun update(bitmap: Bitmap, pose: String, confidence: Float, timestamp: Long){
         updateUI(bitmap, pose, confidence, timestamp)
         if (recordingFlag)
         {
@@ -303,13 +265,13 @@ class AnalyzerFragment : Fragment() {
                 if (displayWidth < displayHeight){
                     val scale = canvas.width.toFloat()/bitmap.width.toFloat()
                     val dst = RectF(0F, (canvas.height - bitmap.height.toFloat() * scale) / 2, displayWidth.toFloat(),
-                            canvas.height - (canvas.height - bitmap.height.toFloat() * scale) / 2)
+                        canvas.height - (canvas.height - bitmap.height.toFloat() * scale) / 2)
                     canvas.drawBitmap(bitmap, null, dst, null)
                 }
                 if (displayWidth >= displayHeight){
                     val scale = canvas.height.toFloat()/bitmap.height.toFloat()
                     val dst = RectF((canvas.width - bitmap.width * scale) / 2, 0F,
-                            canvas.width - (canvas.width - bitmap.width * scale) / 2, canvas.height.toFloat())
+                        canvas.width - (canvas.width - bitmap.width * scale) / 2, canvas.height.toFloat())
                     canvas.drawBitmap(bitmap, null, dst, null)
                 }
                 textureView.unlockCanvasAndPost(canvas)
@@ -340,17 +302,17 @@ class AnalyzerFragment : Fragment() {
 
 
     override fun onRequestPermissionsResult(
-            requestCode: Int, permissions: Array<String>, grantResults:
-            IntArray
+        requestCode: Int, permissions: Array<String>, grantResults:
+        IntArray
     ) {
         if (requestCode == REQUEST_CODE_PERMISSIONS) {
             if (allPermissionsGranted()) {
                 startCamera()
             } else {
                 Toast.makeText(
-                        context,
-                        "Permissions not granted by the user.",
-                        Toast.LENGTH_SHORT
+                    context,
+                    "Permissions not granted by the user.",
+                    Toast.LENGTH_SHORT
                 ).show()
                 activity?.finish()
             }
@@ -364,17 +326,17 @@ class AnalyzerFragment : Fragment() {
         cameraProviderFuture?.addListener({
             val cameraProvider: ProcessCameraProvider = cameraProviderFuture.get()
             val imageAnalyzer = ImageAnalysis.Builder()
-                    .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
-                    .setTargetResolution(targetSize)
-                    .build()
-                    .also {
-                        it.setAnalyzer(cameraExecutor, analyzer)
-                    }
+                .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
+                .setTargetResolution(targetSize)
+                .build()
+                .also {
+                    it.setAnalyzer(cameraExecutor, analyzer)
+                }
 
             try {
                 cameraProvider.unbindAll()
                 cameraProvider.bindToLifecycle(
-                        this, lensFacing, imageAnalyzer)
+                    this, lensFacing, imageAnalyzer)
 
             } catch (exc: Exception) {
                 Log.e(TAG, "Use case binding failed", exc)
@@ -383,71 +345,5 @@ class AnalyzerFragment : Fragment() {
         }, ContextCompat.getMainExecutor(context))
     }
 
-    private fun filterListOfPoses(listOfPoses: List<Pair<String, Long>>):List<Pair<String, Long>>
-    {
-        val temporaryList1: MutableList<Pair<String, Long>> = mutableListOf()
-        val temporaryList2: MutableList<Pair<String, Long>> = mutableListOf()
-        var lastTimestamp = 0L
-        if (listOfPoses.isNotEmpty())
-        {
-            lastTimestamp = listOfPoses.last().second
-        }
-        for (i in listOfPoses.indices)
-        {
-            if ( i > 0 )
-            {
-                if (listOfPoses[i].first != listOfPoses[i - 1].first)
-                {
-                    temporaryList1.add(listOfPoses[i])
-                }
-            }
-            if (i == 0)
-            {
-                temporaryList1.add(listOfPoses[i])
-            }
-        }
 
-        for (i in temporaryList1.indices)
-        {
-            if (i > 0) {
-                if ((temporaryList1[i].second - temporaryList1[i - 1].second) >= timeThreshold * 1000) {
-                    temporaryList2.add(temporaryList1[i])
-                }
-            }
-            else if (i == 0)
-            {
-                temporaryList2.add(temporaryList1[i])
-            }
-        }
-
-        temporaryList1.clear()
-        for (i in temporaryList2.indices)
-        {
-            if ( i > 0 )
-            {
-                if (temporaryList2[i].first != temporaryList2[i - 1].first)
-                {
-                    temporaryList1.add(temporaryList2[i])
-                }
-            }
-            if (i == 0)
-            {
-                temporaryList1.add(temporaryList2[i])
-            }
-        }
-
-        val finalList: MutableList<Pair<String, Long>> = mutableListOf()
-        for (i in temporaryList1.indices)
-        {
-            if (i < temporaryList1.lastIndex)
-            {
-                finalList.add(Pair(temporaryList1[i].first, temporaryList1[i + 1].second - temporaryList1[i].second))
-            }
-            else
-            {
-                finalList.add(Pair(temporaryList1[i].first, lastTimestamp - temporaryList1[i].second))
-            }
-        }
-        return finalList
-    }
 }
