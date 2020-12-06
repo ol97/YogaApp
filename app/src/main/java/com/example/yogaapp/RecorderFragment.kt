@@ -121,12 +121,12 @@ class RecorderFragment : Fragment(), PoseEstimatorUser {
             }
         }
 
-        val layout_top = view.findViewById<LinearLayout>(R.id.layout_top)
-        layout_top.bringToFront()
-        layout_top.invalidate()
-        val layout_bottom = view.findViewById<LinearLayout>(R.id.layout_bottom)
-        layout_bottom.bringToFront()
-        layout_bottom.invalidate()
+        val layoutTop = view.findViewById<LinearLayout>(R.id.layout_top)
+        layoutTop.bringToFront()
+        layoutTop.invalidate()
+        val layoutBottom = view.findViewById<LinearLayout>(R.id.layout_bottom)
+        layoutBottom.bringToFront()
+        layoutBottom.invalidate()
     }
 
     private fun loadSettings(){

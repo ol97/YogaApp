@@ -1,6 +1,5 @@
 package com.example.yogaapp
 
-import android.content.DialogInterface
 import android.os.Bundle
 import android.text.method.ScrollingMovementMethod
 import android.view.LayoutInflater

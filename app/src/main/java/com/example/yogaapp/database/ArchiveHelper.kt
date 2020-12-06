@@ -35,7 +35,7 @@ class ArchiveHelper(context: Context) {
                 values.put(ArchiveDbSchema.PosesInSessionTable.Cols.NUMBER_IN_SEQUENCE, i.toString())
                 values.put(ArchiveDbSchema.PosesInSessionTable.Cols.SESSION_ID, sessionId.toString())
 
-                val rowid = database.insertOrThrow(ArchiveDbSchema.PosesInSessionTable.TABLE_NAME, null, values)
+                database.insertOrThrow(ArchiveDbSchema.PosesInSessionTable.TABLE_NAME, null, values)
 
             }
         }

@@ -42,7 +42,7 @@ class PoseEstimator(context: Context, private val type:String,
     private var confidenceThreshold = 0
     private var parsingJob: Job? = null
     private var classifier: FinalClassifier
-    private var analysisInProgrss: Boolean = false
+    private var analysisInProgress: Boolean = false
     private var rotation: Float = 90F
 
     private val mean  = floatArrayOf(-0.00833482F, -0.62727004F,  0.00146041F,
@@ -97,7 +97,7 @@ class PoseEstimator(context: Context, private val type:String,
 
     @SuppressLint("UnsafeExperimentalUsageError")
     override fun analyze(image: ImageProxy) {
-        analysisInProgrss = true
+        analysisInProgress = true
         if (imageProcessor == null){
 
             val maxDimension = max(image.width, image.height)
@@ -143,7 +143,7 @@ class PoseEstimator(context: Context, private val type:String,
                     poseEstimatorUser)
             }
         }
-        analysisInProgrss = false
+        analysisInProgress = false
         image.close()
     }
 
@@ -299,7 +299,7 @@ class PoseEstimator(context: Context, private val type:String,
 
 
     fun releaseResources(){
-        while (analysisInProgrss){val pass = Unit}
+        while (analysisInProgress){val pass = Unit}
         if (this::model_I.isInitialized){model_I.close()}
         if (this::model_II.isInitialized){model_II.close()}
         if (this::model_III.isInitialized){model_III.close()}
@@ -307,7 +307,7 @@ class PoseEstimator(context: Context, private val type:String,
 
         if (parsingJob == null){classifier.close()}
         else{
-            while (!parsingJob!!.isCompleted){val pass: Unit = Unit}
+            while (!parsingJob!!.isCompleted){val pass = Unit}
             classifier.close()
         }
     }

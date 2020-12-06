@@ -16,13 +16,13 @@ class AnalyzerActivity : AppCompatActivity() {
         setContentView(R.layout.activity_analyzer)
         if (intent.getStringExtra(ANALYZER_MODE_KEY) == "challenge")
         {
-            var graph = findNavController(R.id.analyzer_activity_fragment).graph
+            val graph = findNavController(R.id.analyzer_activity_fragment).graph
             graph.startDestination = R.id.challengeModeFragment
             findNavController(R.id.analyzer_activity_fragment).graph = graph
         }
         else
         {
-            var graph = findNavController(R.id.analyzer_activity_fragment).graph
+            val graph = findNavController(R.id.analyzer_activity_fragment).graph
             graph.startDestination = R.id.recorderFragment
             findNavController(R.id.analyzer_activity_fragment).graph = graph
         }
