@@ -26,6 +26,7 @@ import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 import kotlin.math.round
+import kotlin.random.Random.Default.nextInt
 
 
 class ChallengeModeFragment : Fragment(), PoseEstimatorUser {
@@ -54,8 +55,10 @@ class ChallengeModeFragment : Fragment(), PoseEstimatorUser {
     private val TAG = "CameraXBasic"
     private val REQUEST_CODE_PERMISSIONS = 10
     private val REQUIRED_PERMISSIONS = arrayOf(Manifest.permission.CAMERA)
-    private var recordingFlag: Boolean = false
     private val listOfPoses: MutableList<Pair<String, Long>> = mutableListOf()
+    private lateinit var targetPose: String
+    private var holdTimeThreshold: Int = 1
+    private lateinit var textViewTargetPose: TextView
 
 
     override fun onCreateView(
@@ -78,6 +81,11 @@ class ChallengeModeFragment : Fragment(), PoseEstimatorUser {
         textViewPoseConfidence = view.findViewById(R.id.textViewPoseConfidence)
         imageButtonSwitchCamera = view.findViewById(R.id.imageButtonSwitchCamera)
         textViewPose = view.findViewById(R.id.textViewPose)
+        textViewTargetPose = view.findViewById(R.id.textViewTargetPose)
+        buttonNext = view.findViewById(R.id.buttonNext)
+        buttonNext.setOnClickListener {
+            changePose()
+        }
 
         val layoutTop = view.findViewById<LinearLayout>(R.id.layout_top)
         layoutTop.bringToFront()
@@ -93,7 +101,7 @@ class ChallengeModeFragment : Fragment(), PoseEstimatorUser {
         timeThreshold = preferences.getInt("timeThreshold", 1)
         modelType = preferences.getString("modelType", "RT").toString()
         showFPS = preferences.getBoolean("showFPS", true)
-
+        holdTimeThreshold = preferences.getInt("holdPoseThreshold", 1)
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -107,6 +115,7 @@ class ChallengeModeFragment : Fragment(), PoseEstimatorUser {
 
     override fun onResume() {
         super.onResume()
+        targetPose = randomPose()
         cameraExecutor = Executors.newSingleThreadExecutor()
 
         if (modelType == "I"){
@@ -249,12 +258,12 @@ class ChallengeModeFragment : Fragment(), PoseEstimatorUser {
     }
 
     override fun update(bitmap: Bitmap, pose: String, confidence: Float, timestamp: Long){
-        updateUI(bitmap, pose, confidence, timestamp)
-        if (recordingFlag)
+        listOfPoses.add(Pair(pose, timestamp))
+        if (checkPose())
         {
-            listOfPoses.add(Pair(pose, timestamp))
+            changePose()
         }
-
+        updateUI(bitmap, pose, confidence, timestamp)
     }
 
     private fun updateUI(bitmap: Bitmap, pose: String, confidence: Float, timestamp: Long){
@@ -289,6 +298,7 @@ class ChallengeModeFragment : Fragment(), PoseEstimatorUser {
             textViewPoseConfidence.text = "Confidence: " + (round(confidence * 10000) / 100).toString() + "%"
             textViewPose.text = "Pose: " + pose
             lastUpdated = timestamp
+            textViewTargetPose.text = "Target pose: " + targetPose
         }
     }
 
@@ -345,5 +355,60 @@ class ChallengeModeFragment : Fragment(), PoseEstimatorUser {
         }, ContextCompat.getMainExecutor(context))
     }
 
+    private fun randomPose(): String
+    {
+        val randomNumber = nextInt(10)
+        var pose = "Unknown"
+        when (randomNumber) {
+            0 -> {pose = "Tree Pose"}
+            1 -> {pose = "Warrior I Pose"}
+            2 -> {pose = "Downward Dog Pose"}
+            3 -> {pose = "Mountain Pose"}
+            4 -> {pose = "Warrior II Pose"}
+            5 -> {pose = "Bow Pose"}
+            6 -> {pose = "Camel Pose"}
+            7 -> {pose = "Plank Pose"}
+            8 -> {pose = "Chair Pose"}
+            9 -> {pose = "Garland Pose"}
+        }
+        return pose
+    }
 
+    private fun checkPose(): Boolean
+    {
+        var requirementMet: Boolean = true
+        val reversedList: MutableList<Pair<String, Long>> = mutableListOf()
+        reversedList.addAll(listOfPoses.asReversed())
+        if (reversedList[0].second - reversedList.lastOrNull()!!.second < holdTimeThreshold)
+        {
+            requirementMet = false
+            return requirementMet
+        }
+        for (pose in reversedList)
+        {
+            if (reversedList[0].second - pose.second < holdTimeThreshold * 1000 &&
+                    pose.first != targetPose)
+            {
+                requirementMet = false
+            }
+
+            if (reversedList[0].second - pose.second >= holdTimeThreshold * 1000)
+            {
+                listOfPoses.remove(pose)
+            }
+        }
+        return requirementMet
+    }
+
+    private fun changePose()
+    {
+        var newPose: String
+        do
+        {
+            newPose = randomPose()
+        }
+        while(newPose == targetPose)
+        targetPose = newPose
+        listOfPoses.clear()
+    }
 }
