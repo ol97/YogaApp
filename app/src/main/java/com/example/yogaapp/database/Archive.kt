@@ -6,15 +6,14 @@ import android.database.sqlite.SQLiteOpenHelper
 import android.util.Log
 import java.lang.Exception
 
-class Archive(context: Context) : SQLiteOpenHelper(context,"Archive.db", null, 1) {
+class Archive(context: Context) : SQLiteOpenHelper(context,"Archive.db", null, 2) {
 
     override fun onCreate(db: SQLiteDatabase?) {
         if (db != null) {
             try{
                 db.execSQL("create table " + ArchiveDbSchema.SessionTable.TABLE_NAME + "(" +
                         "id integer primary key autoincrement, " +
-                        "UNIQUE(" +
-                        ArchiveDbSchema.SessionTable.Cols.NAME + "), " +
+                        ArchiveDbSchema.SessionTable.Cols.NAME + " unique , " +
                         ArchiveDbSchema.SessionTable.Cols.DATE + ", " +
                         ArchiveDbSchema.SessionTable.Cols.TIME + ", " +
                         ArchiveDbSchema.SessionTable.Cols.DURATION + ")" )

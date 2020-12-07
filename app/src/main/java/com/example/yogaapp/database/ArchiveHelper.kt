@@ -3,6 +3,7 @@ package com.example.yogaapp.database
 import android.content.ContentValues
 import android.content.Context
 import android.util.Log
+import com.example.yogaapp.TimestampedPose
 import java.lang.Exception
 import java.text.SimpleDateFormat
 import java.util.*
@@ -10,14 +11,14 @@ import java.util.*
 class ArchiveHelper(context: Context) {
     private val database = Archive(context).writableDatabase
 
-    fun insertSession(listOfPoses: List<Pair<String, Long>>, name: String): Boolean{
+    fun insertSession(listOfPoses: List<TimestampedPose>, name: String): Boolean{
         var ok = true
         try
         {
             val values = ContentValues()
             var totalDuration = 0L
-            for (pair in listOfPoses){
-                totalDuration += pair.second
+            for (timestampedPose in listOfPoses){
+                totalDuration += timestampedPose.timestamp
             }
             val currentDate: String = SimpleDateFormat("dd-MM-yyyy", Locale.getDefault()).format(Date())
             val currentTime = SimpleDateFormat("HH:mm:ss", Locale.getDefault()).format(Date())
@@ -26,12 +27,12 @@ class ArchiveHelper(context: Context) {
             values.put(ArchiveDbSchema.SessionTable.Cols.DATE, currentDate)
             values.put(ArchiveDbSchema.SessionTable.Cols.DURATION, totalDuration)
 
-            val sessionId = database.insert(ArchiveDbSchema.SessionTable.TABLE_NAME, null, values)
+            val sessionId = database.insertOrThrow(ArchiveDbSchema.SessionTable.TABLE_NAME, null, values)
 
-            for ((i, pair) in listOfPoses.withIndex()){
+            for ((i, timestampedPose) in listOfPoses.withIndex()){
                 values.clear()
-                values.put(ArchiveDbSchema.PosesInSessionTable.Cols.POSE_NAME, pair.first)
-                values.put(ArchiveDbSchema.PosesInSessionTable.Cols.DURATION, pair.second.toString())
+                values.put(ArchiveDbSchema.PosesInSessionTable.Cols.POSE_NAME, timestampedPose.poseName)
+                values.put(ArchiveDbSchema.PosesInSessionTable.Cols.DURATION, timestampedPose.timestamp.toString())
                 values.put(ArchiveDbSchema.PosesInSessionTable.Cols.NUMBER_IN_SEQUENCE, i.toString())
                 values.put(ArchiveDbSchema.PosesInSessionTable.Cols.SESSION_ID, sessionId.toString())
 

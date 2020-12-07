@@ -9,6 +9,7 @@ import android.graphics.Color
 import android.graphics.RectF
 import android.hardware.SensorManager
 import android.os.Bundle
+import android.os.Parcelable
 import android.os.SystemClock
 import android.util.DisplayMetrics
 import android.util.Log
@@ -22,6 +23,7 @@ import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.core.content.ContextCompat
 import androidx.navigation.fragment.findNavController
 import androidx.preference.PreferenceManager
+import java.util.ArrayList
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
@@ -50,15 +52,17 @@ class ChallengeModeFragment : Fragment(), PoseEstimatorUser {
     private lateinit var preferences: SharedPreferences
     private var showFPS: Boolean = true
     private var confidenceThreshold:Int = 20
-    private var timeThreshold:Int = 1
+    private var filteringTimeThreshold:Int = 1
     private lateinit var modelType: String
     private val TAG = "CameraXBasic"
     private val REQUEST_CODE_PERMISSIONS = 10
     private val REQUIRED_PERMISSIONS = arrayOf(Manifest.permission.CAMERA)
-    private val listOfPoses: MutableList<Pair<String, Long>> = mutableListOf()
+    private var listOfPoses: MutableList<TimestampedPose> = mutableListOf()
     private lateinit var targetPose: String
     private var holdTimeThreshold: Int = 1
     private lateinit var textViewTargetPose: TextView
+    private val KEY_TARGET_POSE = "target_pose"
+    private val KEY_LIST_OF_POSES = "list_of_poses"
 
 
     override fun onCreateView(
@@ -98,7 +102,7 @@ class ChallengeModeFragment : Fragment(), PoseEstimatorUser {
     private fun loadSettings(){
         preferences = PreferenceManager.getDefaultSharedPreferences(context)
         confidenceThreshold = preferences.getInt("confidenceThreshold", 20)
-        timeThreshold = preferences.getInt("timeThreshold", 1)
+        filteringTimeThreshold = preferences.getInt("timeThreshold", 1)
         modelType = preferences.getString("modelType", "RT").toString()
         showFPS = preferences.getBoolean("showFPS", true)
         holdTimeThreshold = preferences.getInt("holdPoseThreshold", 1)
@@ -111,11 +115,23 @@ class ChallengeModeFragment : Fragment(), PoseEstimatorUser {
         activity?.windowManager?.defaultDisplay?.getMetrics(displayMetrics)
         displayHeight = displayMetrics.heightPixels
         displayWidth = displayMetrics.widthPixels
+        targetPose = randomPose()
+
+        if (savedInstanceState != null)
+        {
+            targetPose = savedInstanceState.getString(KEY_TARGET_POSE).toString()
+            listOfPoses = savedInstanceState.getParcelableArrayList<TimestampedPose>(KEY_LIST_OF_POSES) as MutableList<TimestampedPose>
+            if (savedInstanceState.getBoolean(LENS_FACING_KEY)) {
+                lensFacing = CameraSelector.DEFAULT_FRONT_CAMERA
+            } else {
+                lensFacing = CameraSelector.DEFAULT_BACK_CAMERA
+            }
+        }
     }
 
     override fun onResume() {
         super.onResume()
-        targetPose = randomPose()
+
         cameraExecutor = Executors.newSingleThreadExecutor()
 
         if (modelType == "I"){
@@ -255,10 +271,12 @@ class ChallengeModeFragment : Fragment(), PoseEstimatorUser {
         else{
             outState.putBoolean(LENS_FACING_KEY, false)
         }
+        outState.putString(KEY_TARGET_POSE, targetPose)
+        outState.putParcelableArrayList(KEY_LIST_OF_POSES, listOfPoses as ArrayList<out Parcelable>)
     }
 
     override fun update(bitmap: Bitmap, pose: String, confidence: Float, timestamp: Long){
-        listOfPoses.add(Pair(pose, timestamp))
+        listOfPoses.add(TimestampedPose(pose, timestamp))
         if (checkPose())
         {
             changePose()
@@ -377,22 +395,22 @@ class ChallengeModeFragment : Fragment(), PoseEstimatorUser {
     private fun checkPose(): Boolean
     {
         var requirementMet: Boolean = true
-        val reversedList: MutableList<Pair<String, Long>> = mutableListOf()
+        val reversedList: MutableList<TimestampedPose> = mutableListOf()
         reversedList.addAll(listOfPoses.asReversed())
-        if (reversedList[0].second - reversedList.lastOrNull()!!.second < holdTimeThreshold)
+        if (reversedList[0].timestamp - reversedList.lastOrNull()!!.timestamp < holdTimeThreshold)
         {
             requirementMet = false
             return requirementMet
         }
         for (pose in reversedList)
         {
-            if (reversedList[0].second - pose.second < holdTimeThreshold * 1000 &&
-                    pose.first != targetPose)
+            if (reversedList[0].timestamp - pose.timestamp < holdTimeThreshold * 1000 &&
+                    pose.poseName != targetPose)
             {
                 requirementMet = false
             }
 
-            if (reversedList[0].second - pose.second >= holdTimeThreshold * 1000)
+            if (reversedList[0].timestamp - pose.timestamp >= holdTimeThreshold * 1000)
             {
                 listOfPoses.remove(pose)
             }

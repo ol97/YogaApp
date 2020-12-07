@@ -14,23 +14,15 @@ class AnalyzerActivity : AppCompatActivity() {
         window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
         supportActionBar?.hide()
         setContentView(R.layout.activity_analyzer)
-        if (intent.getStringExtra(ANALYZER_MODE_KEY) == "challenge")
-        {
-            val graph = findNavController(R.id.analyzer_activity_fragment).graph
-            graph.startDestination = R.id.challengeModeFragment
-            findNavController(R.id.analyzer_activity_fragment).graph = graph
+
+        if (intent.getStringExtra(ANALYZER_MODE_KEY) == "challenge") {
+            findNavController(R.id.analyzer_activity_fragment).setGraph(R.navigation.analyzer_nav_challenge)
+        } else {
+            findNavController(R.id.analyzer_activity_fragment).setGraph(R.navigation.analyzer_nav_recorder)
         }
-        else
-        {
-            val graph = findNavController(R.id.analyzer_activity_fragment).graph
-            graph.startDestination = R.id.recorderFragment
-            findNavController(R.id.analyzer_activity_fragment).graph = graph
-        }
-        setupActionBarWithNavController(findNavController(R.id.analyzer_activity_fragment))
+
     }
 
-    override fun onSupportNavigateUp(): Boolean {
-        val navController = findNavController(R.id.analyzer_activity_fragment)
-        return super.onSupportNavigateUp() || navController.navigateUp()
-    }
 }
+
+

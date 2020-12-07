@@ -2,6 +2,7 @@ package com.example.yogaapp
 
 import android.Manifest
 import android.annotation.SuppressLint
+import android.content.Context
 import android.content.DialogInterface
 import android.content.SharedPreferences
 import android.content.pm.PackageManager
@@ -10,6 +11,7 @@ import android.graphics.Color
 import android.graphics.RectF
 import android.hardware.SensorManager
 import android.os.Bundle
+import android.os.Parcelable
 import android.os.SystemClock
 import android.util.DisplayMetrics
 import android.util.Log
@@ -25,6 +27,7 @@ import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.findNavController
 import androidx.preference.PreferenceManager
 import com.example.yogaapp.database.ArchiveHelper
+import java.util.ArrayList
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
@@ -57,8 +60,10 @@ class RecorderFragment : Fragment(), PoseEstimatorUser {
     private val TAG = "CameraXBasic"
     private val REQUEST_CODE_PERMISSIONS = 10
     private val REQUIRED_PERMISSIONS = arrayOf(Manifest.permission.CAMERA)
+    private val KEY_RECORDING = "recording_flag"
+    private val KEY_LIST_OF_POSES = "list_of_poses"
     private var recordingFlag: Boolean = false
-    private val listOfPoses: MutableList<Pair<String, Long>> = mutableListOf()
+    private var listOfPoses: MutableList<TimestampedPose> = mutableListOf()
 
 
     override fun onCreateView(
@@ -70,6 +75,20 @@ class RecorderFragment : Fragment(), PoseEstimatorUser {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         loadSettings()
+
+        if (savedInstanceState != null) {
+            recordingFlag = savedInstanceState.getBoolean(KEY_RECORDING)
+            if (savedInstanceState.getBoolean(LENS_FACING_KEY)) {
+                lensFacing = CameraSelector.DEFAULT_FRONT_CAMERA
+            } else {
+                lensFacing = CameraSelector.DEFAULT_BACK_CAMERA
+            }
+            if (recordingFlag)
+            {
+                listOfPoses = savedInstanceState.getParcelableArrayList<TimestampedPose>(KEY_LIST_OF_POSES) as MutableList<TimestampedPose>
+            }
+        }
+
         imageButtonSettings = view.findViewById(R.id.imageButtonSettings)
         imageButtonSettings.setOnClickListener {
             findNavController().navigate(R.id.action_recorderFragment_to_settingsFragment)
@@ -82,6 +101,7 @@ class RecorderFragment : Fragment(), PoseEstimatorUser {
         imageButtonSwitchCamera = view.findViewById(R.id.imageButtonSwitchCamera)
         textViewPose = view.findViewById(R.id.textViewPose)
         toggleButtonRecord = view.findViewById(R.id.toggleButtonRecord)
+        toggleButtonRecord.isChecked = recordingFlag
         toggleButtonRecord.setOnCheckedChangeListener { buttonView, isChecked ->
 
             recordingFlag = isChecked
@@ -134,6 +154,8 @@ class RecorderFragment : Fragment(), PoseEstimatorUser {
         layoutBottom.invalidate()
     }
 
+
+
     private fun loadSettings(){
         preferences = PreferenceManager.getDefaultSharedPreferences(context)
         confidenceThreshold = preferences.getInt("confidenceThreshold", 20)
@@ -151,6 +173,8 @@ class RecorderFragment : Fragment(), PoseEstimatorUser {
         displayHeight = displayMetrics.heightPixels
         displayWidth = displayMetrics.widthPixels
     }
+
+
 
     override fun onResume() {
         super.onResume()
@@ -293,13 +317,18 @@ class RecorderFragment : Fragment(), PoseEstimatorUser {
         else{
             outState.putBoolean(LENS_FACING_KEY, false)
         }
+        outState.putBoolean(KEY_RECORDING, recordingFlag)
+        if (recordingFlag)
+        {
+            outState.putParcelableArrayList(KEY_LIST_OF_POSES, listOfPoses as ArrayList<out Parcelable>)
+        }
     }
 
      override fun update(bitmap: Bitmap, pose: String, confidence: Float, timestamp: Long){
         updateUI(bitmap, pose, confidence, timestamp)
         if (recordingFlag)
         {
-            listOfPoses.add(Pair(pose, timestamp))
+            listOfPoses.add(TimestampedPose(pose, timestamp))
         }
 
     }
@@ -338,9 +367,6 @@ class RecorderFragment : Fragment(), PoseEstimatorUser {
             lastUpdated = timestamp
         }
     }
-
-
-
 
 
     private fun allPermissionsGranted() = REQUIRED_PERMISSIONS.all {
@@ -392,20 +418,20 @@ class RecorderFragment : Fragment(), PoseEstimatorUser {
         }, ContextCompat.getMainExecutor(context))
     }
 
-    private fun filterListOfPoses(listOfPoses: List<Pair<String, Long>>):List<Pair<String, Long>>
+    private fun filterListOfPoses(listOfPoses: List<TimestampedPose>):List<TimestampedPose>
     {
-        val temporaryList1: MutableList<Pair<String, Long>> = mutableListOf()
-        val temporaryList2: MutableList<Pair<String, Long>> = mutableListOf()
+        val temporaryList1: MutableList<TimestampedPose> = mutableListOf()
+        val temporaryList2: MutableList<TimestampedPose> = mutableListOf()
         var lastTimestamp = 0L
         if (listOfPoses.isNotEmpty())
         {
-            lastTimestamp = listOfPoses.last().second
+            lastTimestamp = listOfPoses.last().timestamp
         }
         for (i in listOfPoses.indices)
         {
             if ( i > 0 )
             {
-                if (listOfPoses[i].first != listOfPoses[i - 1].first)
+                if (listOfPoses[i].poseName != listOfPoses[i - 1].poseName)
                 {
                     temporaryList1.add(listOfPoses[i])
                 }
@@ -419,7 +445,7 @@ class RecorderFragment : Fragment(), PoseEstimatorUser {
         for (i in temporaryList1.indices)
         {
             if (i > 0) {
-                if ((temporaryList1[i].second - temporaryList1[i - 1].second) >= timeThreshold * 1000) {
+                if ((temporaryList1[i].timestamp - temporaryList1[i - 1].timestamp) >= timeThreshold * 1000) {
                     temporaryList2.add(temporaryList1[i])
                 }
             }
@@ -434,7 +460,7 @@ class RecorderFragment : Fragment(), PoseEstimatorUser {
         {
             if ( i > 0 )
             {
-                if (temporaryList2[i].first != temporaryList2[i - 1].first)
+                if (temporaryList2[i].poseName != temporaryList2[i - 1].poseName)
                 {
                     temporaryList1.add(temporaryList2[i])
                 }
@@ -445,16 +471,18 @@ class RecorderFragment : Fragment(), PoseEstimatorUser {
             }
         }
 
-        val finalList: MutableList<Pair<String, Long>> = mutableListOf()
+        val finalList: MutableList<TimestampedPose> = mutableListOf()
         for (i in temporaryList1.indices)
         {
             if (i < temporaryList1.lastIndex)
             {
-                finalList.add(Pair(temporaryList1[i].first, temporaryList1[i + 1].second - temporaryList1[i].second))
+                finalList.add(TimestampedPose(temporaryList1[i].poseName,
+                        temporaryList1[i + 1].timestamp - temporaryList1[i].timestamp))
             }
             else
             {
-                finalList.add(Pair(temporaryList1[i].first, lastTimestamp - temporaryList1[i].second))
+                finalList.add(TimestampedPose(temporaryList1[i].poseName,
+                        lastTimestamp - temporaryList1[i].timestamp))
             }
         }
         return finalList
