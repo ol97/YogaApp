@@ -13,7 +13,8 @@ class Archive(context: Context) : SQLiteOpenHelper(context,"Archive.db", null, 1
             try{
                 db.execSQL("create table " + ArchiveDbSchema.SessionTable.TABLE_NAME + "(" +
                         "id integer primary key autoincrement, " +
-                        ArchiveDbSchema.SessionTable.Cols.NAME + ", " +
+                        "UNIQUE(" +
+                        ArchiveDbSchema.SessionTable.Cols.NAME + "), " +
                         ArchiveDbSchema.SessionTable.Cols.DATE + ", " +
                         ArchiveDbSchema.SessionTable.Cols.TIME + ", " +
                         ArchiveDbSchema.SessionTable.Cols.DURATION + ")" )

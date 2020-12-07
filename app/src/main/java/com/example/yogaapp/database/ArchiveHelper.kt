@@ -86,17 +86,11 @@ class ArchiveHelper(context: Context) {
         val list = mutableListOf<Array<String>>()
         try {
 
-            val distinct = false
-            val table = ArchiveDbSchema.PosesInSessionTable.TABLE_NAME
-            val columns = null
-            val selection = ArchiveDbSchema.PosesInSessionTable.Cols.SESSION_ID + " = CAST(? AS INTEGER)"
-            val selectionArgs = arrayOf(sessionId)
-            val groupBy = null
-            val having = null
-            val orderBy = "CAST(" + ArchiveDbSchema.PosesInSessionTable.Cols.NUMBER_IN_SEQUENCE + " AS INTEGER)" + " asc"
-            val limit = null
-
-            val cursor = database.query(distinct, table, columns, selection, selectionArgs, groupBy, having, orderBy, limit)
+            val cursor = database.query(false,
+                    ArchiveDbSchema.PosesInSessionTable.TABLE_NAME, null,
+                    ArchiveDbSchema.PosesInSessionTable.Cols.SESSION_ID + " = CAST(? AS INTEGER)",
+                    arrayOf(sessionId), null, null,
+                    "CAST(" + ArchiveDbSchema.PosesInSessionTable.Cols.NUMBER_IN_SEQUENCE + " AS INTEGER)" + " asc", null)
             if (cursor.moveToFirst())
             {
                 do
@@ -156,29 +150,65 @@ class ArchiveHelper(context: Context) {
     }
 
     fun readSessionData(sessionId: String): Array<String> {
-        val cursor = database.query(false, ArchiveDbSchema.SessionTable.TABLE_NAME,
-                null,
-                ArchiveDbSchema.SessionTable.Cols.ID + " = CAST(? AS INTEGER)",
-                arrayOf(sessionId), null, null ,
-                ArchiveDbSchema.SessionTable.Cols.ID +" desc", null, null)
-        if (cursor.moveToFirst())
+        try
         {
-            val name = cursor.getString(cursor.getColumnIndex(ArchiveDbSchema.SessionTable.Cols.NAME))
-            val date = cursor.getString(cursor.getColumnIndex(ArchiveDbSchema.SessionTable.Cols.DATE))
-            val time = cursor.getString(cursor.getColumnIndex(ArchiveDbSchema.SessionTable.Cols.TIME))
-            val duration = cursor.getString(cursor.getColumnIndex(ArchiveDbSchema.SessionTable.Cols.DURATION))
-            val id = cursor.getString(cursor.getColumnIndex(ArchiveDbSchema.SessionTable.Cols.ID))
+            val cursor = database.query(false, ArchiveDbSchema.SessionTable.TABLE_NAME,
+                    null,
+                    ArchiveDbSchema.SessionTable.Cols.ID + " = CAST(? AS INTEGER)",
+                    arrayOf(sessionId), null, null ,
+                    ArchiveDbSchema.SessionTable.Cols.ID +" desc", null, null)
+            if (cursor.moveToFirst())
+            {
+                val name = cursor.getString(cursor.getColumnIndex(ArchiveDbSchema.SessionTable.Cols.NAME))
+                val date = cursor.getString(cursor.getColumnIndex(ArchiveDbSchema.SessionTable.Cols.DATE))
+                val time = cursor.getString(cursor.getColumnIndex(ArchiveDbSchema.SessionTable.Cols.TIME))
+                val duration = cursor.getString(cursor.getColumnIndex(ArchiveDbSchema.SessionTable.Cols.DURATION))
+                val id = cursor.getString(cursor.getColumnIndex(ArchiveDbSchema.SessionTable.Cols.ID))
 
-            cursor.close()
-            return arrayOf(id, name, date, time, duration)
-        }
-        else
+                cursor.close()
+                return arrayOf(id, name, date, time, duration)
+            }
+            else
+            {
+                cursor.close()
+                return arrayOf()
+            }
+        }catch(e: Exception)
         {
-            cursor.close()
+            Log.d("SQL", e.message)
+            e.printStackTrace()
             return arrayOf()
         }
     }
 
+    fun readSessionNames(): MutableList<String> {
+        try
+        {
+            val cursor = database.query(true, ArchiveDbSchema.SessionTable.TABLE_NAME,
+                    arrayOf(ArchiveDbSchema.SessionTable.Cols.NAME), null, null,
+                    null, null, null, null)
+
+            val list = mutableListOf<String>()
+            if (cursor.moveToFirst())
+            {
+                do
+                {
+                    val name = cursor.getString(cursor.getColumnIndex(ArchiveDbSchema.SessionTable.Cols.NAME))
+                    list.add(name)
+                }
+                while (cursor.moveToNext())
+            }
+            cursor.close()
+            return list
+
+        }catch(e: Exception)
+        {
+            Log.d("SQL", e.message)
+            e.printStackTrace()
+            return mutableListOf<String>()
+        }
+
+    }
 
     companion object{
         private var instance: ArchiveHelper? = null

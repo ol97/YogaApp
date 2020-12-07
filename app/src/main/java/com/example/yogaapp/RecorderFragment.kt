@@ -2,6 +2,7 @@ package com.example.yogaapp
 
 import android.Manifest
 import android.annotation.SuppressLint
+import android.content.DialogInterface
 import android.content.SharedPreferences
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
@@ -94,30 +95,34 @@ class RecorderFragment : Fragment(), PoseEstimatorUser {
                 val alert = context?.let { it1 -> AlertDialog.Builder(it1) }
                 alert?.setTitle("Set name")
                 alert?.setMessage("Insert name")
-
                 val input = EditText(context)
                 alert?.setView(input)
-
-                alert?.setPositiveButton("Save") { dialog, whichButton ->
+                val names = context?.let { ArchiveHelper.getInstance(it) }!!.readSessionNames()
+                alert?.setPositiveButton("Save") { dialog, whichButton -> }
+                alert?.setNegativeButton("Cancel") { dialog, which -> }
+                val dialog = alert!!.create()
+                dialog.show()
+                dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener{
                     val value = input.text.toString()
-                    context?.let {
-                        val archiveHelper = ArchiveHelper.getInstance(it)
-                        val ok = archiveHelper?.insertSession(filterListOfPoses(listOfPoses), value)
-                        if (!ok!!) {
-                            val t = Toast.makeText(context, "Saving failed!", Toast.LENGTH_SHORT)
-                            t.show()
-                        } else {
-                            val t = Toast.makeText(context, "Saving succeeded!", Toast.LENGTH_SHORT)
-                            t.show()
+                    if (names.contains(value)) {
+                        val toast = Toast.makeText(context, "Name already in use!", Toast.LENGTH_SHORT)
+                        toast.show()
+                    } else {
+                        context?.let {
+                            val archiveHelper = ArchiveHelper.getInstance(it)
+                            val ok = archiveHelper?.insertSession(filterListOfPoses(listOfPoses), value)
+                            if (!ok!!) {
+                                val toast = Toast.makeText(context, "Saving failed!", Toast.LENGTH_SHORT)
+                                toast.show()
+                            } else {
+                                val toast = Toast.makeText(context, "Saving succeeded!", Toast.LENGTH_SHORT)
+                                toast.show()
+                                dialog.dismiss()
+                            }
                         }
                     }
-
                 }
 
-                alert?.setNegativeButton("Cancel"
-                ) { dialog, which ->
-                }
-                alert?.show()
             }
         }
 
