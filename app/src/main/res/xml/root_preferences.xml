@@ -30,9 +30,10 @@
 
         <SeekBarPreference
             android:key="holdPoseThreshold"
-            app:title="Holding pose time threshold (seconds)"
+            app:title="Holding pose time (seconds)"
             app:seekBarIncrement="1"
             android:max="10"
+            app:min="1"
             app:showSeekBarValue="true"
             app:defaultValue="1" />
 
