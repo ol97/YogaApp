@@ -10,8 +10,7 @@ class TimestampedPose(var poseName: String, var timestamp: Long) : Parcelable {
         parcel.writeLong(timestamp)
     }
 
-    constructor(parcel: Parcel): this(parcel.readString().toString(), parcel.readLong()){
-    }
+    constructor(parcel: Parcel): this(parcel.readString().toString(), parcel.readLong())
 
     override fun describeContents(): Int {
         return 0

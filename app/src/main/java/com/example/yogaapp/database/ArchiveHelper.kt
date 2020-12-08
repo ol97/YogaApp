@@ -206,7 +206,7 @@ class ArchiveHelper(context: Context) {
         {
             Log.d("SQL", e.message)
             e.printStackTrace()
-            return mutableListOf<String>()
+            return mutableListOf()
         }
 
     }
