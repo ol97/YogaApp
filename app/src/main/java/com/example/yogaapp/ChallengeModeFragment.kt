@@ -23,6 +23,8 @@ import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.core.content.ContextCompat
 import androidx.navigation.fragment.findNavController
 import androidx.preference.PreferenceManager
+import kotlinx.coroutines.*
+import kotlinx.coroutines.Dispatchers.Main
 import java.util.ArrayList
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
@@ -279,6 +281,9 @@ class ChallengeModeFragment : Fragment(), PoseEstimatorUser {
         listOfPoses.add(TimestampedPose(pose, timestamp))
         if (checkPose())
         {
+            CoroutineScope(Main).launch {
+                greenSignal()
+            }
             changePose()
         }
         updateUI(bitmap, pose, confidence, timestamp)
@@ -428,5 +433,15 @@ class ChallengeModeFragment : Fragment(), PoseEstimatorUser {
         while(newPose == targetPose)
         targetPose = newPose
         listOfPoses.clear()
+    }
+
+    private suspend fun greenSignal()
+    {
+        withContext(Main)
+        {
+            textViewTargetPose.setBackgroundColor(Color.GREEN)
+            delay(500)
+            textViewTargetPose.setBackgroundColor(Color.BLACK)
+        }
     }
 }
