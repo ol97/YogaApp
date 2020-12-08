@@ -2,6 +2,7 @@
 <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/relativeLayout2"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/black"
@@ -9,25 +10,26 @@
 
     <TextureView
         android:id="@+id/textureView"
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
-        app:layout_constraintTop_toBottomOf="@id/layout_top"
-        app:layout_constraintBottom_toTopOf="@id/layout_bottom"/>
+        android:layout_width="0dp"
+        android:layout_height="match_parent"
+        app:layout_constraintLeft_toRightOf="@id/layout_top"
+        app:layout_constraintRight_toRightOf="parent" />
 
     <LinearLayout
         android:id="@+id/layout_top"
-        android:layout_width="match_parent"
+        android:layout_width="200dp"
         android:layout_height="wrap_content"
+        android:background="@color/black"
         android:orientation="vertical"
-        android:paddingLeft="16dp"
+        android:paddingLeft="8dp"
         android:paddingTop="8dp"
+        app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent">
 
         <TextView
             android:id="@+id/textViewFPS"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:gravity="left"
             android:padding="8dp"
             android:text="Time Per Frame:" />
 
@@ -35,7 +37,6 @@
             android:id="@+id/textViewPose"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:gravity="left"
             android:padding="8dp"
             android:text="Pose:" />
 
@@ -43,38 +44,39 @@
             android:id="@+id/textViewPoseConfidence"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:gravity="left"
             android:padding="8dp"
             android:text="Confidence:" />
     </LinearLayout>
 
     <LinearLayout
         android:id="@+id/layout_bottom"
-        android:layout_width="match_parent"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:background="@color/black"
         android:orientation="horizontal"
-        app:layout_constraintBottom_toBottomOf="parent" >
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="@id/layout_top">
 
         <ImageButton
             android:id="@+id/imageButtonSwitchCamera"
             android:layout_width="wrap_content"
             android:layout_height="match_parent"
-            android:layout_weight="0"
             android:backgroundTint="@color/white"
+            android:layout_weight="0"
             android:padding="16dp"
             android:src="@drawable/ic_baseline_flip_camera_ios_24" />
 
 
         <ToggleButton
             android:id="@+id/toggleButtonRecord"
-            android:layout_width="wrap_content"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:backgroundTint="@color/white"
             android:padding="16dp"
-            android:textOff="Start recording"
-            android:textOn="Stop recording" />
+            android:backgroundTint="@color/white"
+            android:textOff="Start"
+            android:textOn="Stop" />
 
 
         <ImageButton
@@ -85,7 +87,6 @@
             android:backgroundTint="@color/white"
             android:padding="16dp"
             android:src="@drawable/ic_baseline_settings_24" />
-
 
     </LinearLayout>
 </androidx.constraintlayout.widget.ConstraintLayout>

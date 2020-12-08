@@ -21,12 +21,10 @@
         android:id="@+id/layout_top"
         android:layout_width="200dp"
         android:layout_height="wrap_content"
-        android:layout_gravity="top|left"
         android:background="@color/black"
         android:orientation="vertical"
         android:paddingLeft="8dp"
         android:paddingTop="8dp"
-
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent">
 
@@ -34,7 +32,7 @@
             android:id="@+id/textViewFPS"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:elevation="1dp"
+            android:gravity="left"
             android:padding="8dp"
             android:text="Time Per Frame:" />
 
@@ -42,7 +40,7 @@
             android:id="@+id/textViewPose"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:elevation="1dp"
+            android:gravity="left"
             android:padding="8dp"
             android:text="Pose:" />
 
@@ -50,7 +48,7 @@
             android:id="@+id/textViewPoseConfidence"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:elevation="1dp"
+            android:gravity="left"
             android:padding="8dp"
             android:text="Confidence:" />
     </LinearLayout>
@@ -70,8 +68,8 @@
             android:id="@+id/textViewTargetPose"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:gravity="center"
-            android:padding="16dp"
+            android:gravity="left"
+            android:padding="8dp"
             android:text="Target pose:" />
 
         <LinearLayout
@@ -84,12 +82,13 @@
                 android:layout_width="wrap_content"
                 android:layout_height="match_parent"
                 android:layout_weight="0"
+                android:backgroundTint="@color/white"
                 android:padding="16dp"
                 android:src="@drawable/ic_baseline_flip_camera_ios_24" />
 
             <Button
                 android:id="@+id/buttonNext"
-                android:layout_width="wrap_content"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:backgroundTint="@color/white"
@@ -103,6 +102,7 @@
                 android:layout_height="match_parent"
                 android:layout_weight="0"
                 android:padding="16dp"
+                android:backgroundTint="@color/white"
                 android:src="@drawable/ic_baseline_settings_24" />
 
         </LinearLayout>
