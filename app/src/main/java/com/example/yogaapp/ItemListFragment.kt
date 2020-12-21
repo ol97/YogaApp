@@ -1,5 +1,6 @@
 package com.example.yogaapp
 
+import android.content.res.Resources
 import android.os.Bundle
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.GridLayoutManager
@@ -8,6 +9,8 @@ import androidx.recyclerview.widget.RecyclerView
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.core.content.res.ResourcesCompat
+import androidx.recyclerview.widget.DividerItemDecoration
 import com.example.yogaapp.database.ArchiveHelper
 
 
@@ -29,7 +32,6 @@ class ItemListFragment : Fragment() {
     ): View? {
         val view = inflater.inflate(R.layout.fragment_item_list_list, container, false)
 
-        // Set the adapter
         if (view is RecyclerView) {
             with(view) {
                 layoutManager = when {
@@ -38,6 +40,9 @@ class ItemListFragment : Fragment() {
                 }
                 adapter = MyItemRecyclerViewAdapter(ArchiveHelper.getInstance(context)?.readSessions()!!)
             }
+            val divider = DividerItemDecoration(context, DividerItemDecoration.VERTICAL)
+            ResourcesCompat.getDrawable(resources, R.drawable.recyclerview_divider, null)?.let { divider.setDrawable(it) }
+            view.addItemDecoration(divider)
         }
         return view
     }
