@@ -55,14 +55,14 @@
             android:text="@string/dateTextView" />
 
         <TextView
-            android:id="@+id/textViewHour"
+            android:id="@+id/textViewTime"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginLeft="16dp"
             app:layout_columnWeight="1"
             app:layout_rowWeight="1"
             android:padding="16dp"
-            android:text="@string/hourTextView" />
+            android:text="@string/timeTextView" />
     </androidx.gridlayout.widget.GridLayout>
 
     <Button

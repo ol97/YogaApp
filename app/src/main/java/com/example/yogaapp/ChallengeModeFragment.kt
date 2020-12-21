@@ -56,7 +56,6 @@ class ChallengeModeFragment : Fragment(), PoseEstimatorUser {
     private var confidenceThreshold:Int = 20
     private var filteringTimeThreshold:Int = 1
     private lateinit var modelType: String
-    private val TAG = "CameraXBasic"
     private val REQUEST_CODE_PERMISSIONS = 10
     private val REQUIRED_PERMISSIONS = arrayOf(Manifest.permission.CAMERA)
     private var listOfPoses: MutableList<TimestampedPose> = mutableListOf()
@@ -368,7 +367,7 @@ class ChallengeModeFragment : Fragment(), PoseEstimatorUser {
                     this, lensFacing, imageAnalyzer)
 
             } catch (exc: Exception) {
-                Log.e(TAG, "Use case binding failed", exc)
+                Log.e("CameraX", "Use case binding failed", exc)
             }
 
         }, ContextCompat.getMainExecutor(context))

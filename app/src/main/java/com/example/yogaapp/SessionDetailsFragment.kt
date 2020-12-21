@@ -1,6 +1,7 @@
 package com.example.yogaapp
 
 import android.os.Bundle
+import android.text.format.DateUtils
 import android.text.method.ScrollingMovementMethod
 import android.view.LayoutInflater
 import android.view.View
@@ -13,7 +14,6 @@ import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.findNavController
 import androidx.navigation.fragment.navArgs
 import com.example.yogaapp.database.ArchiveHelper
-import java.lang.Integer.parseInt
 import java.lang.Long.parseLong
 
 
@@ -22,13 +22,11 @@ class SessionDetailsFragment : Fragment() {
 
     private lateinit var textViewName: TextView
     private lateinit var textViewDate: TextView
-    private lateinit var textViewHour: TextView
+    private lateinit var textViewTime: TextView
     private lateinit var textViewDuration: TextView
     private lateinit var textViewPoses: TextView
     private lateinit var buttonDelete: Button
     private lateinit var buttonRename: Button
-
-
 
     override fun onCreateView(
             inflater: LayoutInflater, container: ViewGroup?,
@@ -42,7 +40,7 @@ class SessionDetailsFragment : Fragment() {
 
         textViewName = view.findViewById(R.id.textViewName)
         textViewDate = view.findViewById(R.id.textViewDate)
-        textViewHour = view.findViewById(R.id.textViewHour)
+        textViewTime = view.findViewById(R.id.textViewTime)
         textViewDuration = view.findViewById(R.id.textViewDuration)
         textViewPoses = view.findViewById(R.id.textViewPoses)
         textViewPoses.movementMethod = ScrollingMovementMethod()
@@ -51,8 +49,8 @@ class SessionDetailsFragment : Fragment() {
 
         textViewName.text = getString(R.string.nameTextView, args.name)
         textViewDate.text = getString(R.string.dateTextView, args.date)
-        textViewHour.text = getString(R.string.hourTextView, args.hour)
-        textViewDuration.text = getString(R.string.durationTextView, (parseLong(args.duration)/1000F).toInt())
+        textViewTime.text = getString(R.string.timeTextView, args.time)
+        textViewDuration.text = getString(R.string.durationTextView, DateUtils.formatElapsedTime((parseLong(args.duration)/1000F).toLong()))
 
         buttonDelete.setOnClickListener {
 
@@ -121,8 +119,9 @@ class SessionDetailsFragment : Fragment() {
         {
             textViewDate.text = getString(R.string.dateTextView, sessionData[2])
             textViewName.text = getString(R.string.nameTextView, sessionData[1])
-            textViewHour.text = getString(R.string.hourTextView, sessionData[3])
-            textViewDuration.text = getString(R.string.durationTextView, parseInt(sessionData[4]))
+            textViewTime.text = getString(R.string.timeTextView, sessionData[3])
+            textViewDuration.text = getString(R.string.durationTextView,
+                    DateUtils.formatElapsedTime(parseLong(sessionData[4])/1000L))
         }
     }
 

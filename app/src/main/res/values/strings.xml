@@ -11,8 +11,8 @@
     <string name="targetPoseTextViewEmpty">Target pose:</string>
     <string name="nameTextView">Name: %1$s</string>
     <string name="dateTextView">Date: %1$s</string>
-    <string name="hourTextView">Time: %1$s</string>
-    <string name="durationTextView">Duration: %1$d seconds</string>
+    <string name="timeTextView">Time: %1$s</string>
+    <string name="durationTextView">Duration: %1$s</string>
     <string name="permissionNotGranted">Permissions not granted by the user.</string>
     <string name="setName">Set name</string>
     <string name="insertName">Name:</string>
