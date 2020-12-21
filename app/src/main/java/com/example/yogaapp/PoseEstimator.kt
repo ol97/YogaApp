@@ -26,7 +26,7 @@ import org.tensorflow.lite.support.tensorbuffer.TensorBuffer
 import kotlin.math.max
 
 class PoseEstimator(context: Context, private val type:String,
-                    private val poseEstimatorUser: PoseEstimatorUser
+                    private val poseEstimatorUser: PoseEstimatorUser, private val pointSize: Int
 ) : ImageAnalysis.Analyzer {
 
     private lateinit var model_I: EfficientPoseI
@@ -143,14 +143,14 @@ class PoseEstimator(context: Context, private val type:String,
         if (parsingJob == null)
         {
             parsingJob = CoroutineScope(Default).launch{
-                parseOutput(inputSize, outputBufferEstimator, bitmap, poseEstimatorUser)
+                parseOutput(inputSize, outputBufferEstimator, bitmap, poseEstimatorUser, pointSize)
             }
         }
         else
         {
             while(!parsingJob!!.isCompleted){val pass = Unit}
             parsingJob = CoroutineScope(Default).launch{
-                parseOutput(inputSize, outputBufferEstimator, bitmap, poseEstimatorUser)
+                parseOutput(inputSize, outputBufferEstimator, bitmap, poseEstimatorUser, pointSize)
             }
         }
         analysisInProgress = false
@@ -158,7 +158,7 @@ class PoseEstimator(context: Context, private val type:String,
     }
 
     private suspend fun parseOutput(inputSize: Size, outputBuffer: TensorBuffer, bitmap: Bitmap,
-                                    poseEstimatorUser: PoseEstimatorUser){
+                                    poseEstimatorUser: PoseEstimatorUser, pointSize: Int){
         val pointsArray = FloatArray(32)
         val xArray = FloatArray(16)
         val yArray = FloatArray(16)
@@ -200,7 +200,7 @@ class PoseEstimator(context: Context, private val type:String,
         val classifierOutput = classifyPose(inputArray)
 
 
-        poseEstimatorUser.update(drawPoints(bitmap,pointsArray,scoresArray),
+        poseEstimatorUser.update(drawPoints(bitmap,pointsArray,scoresArray, pointSize),
             classifierOutput.first, classifierOutput.second, System.currentTimeMillis())
 
     }
@@ -242,12 +242,12 @@ class PoseEstimator(context: Context, private val type:String,
         return Pair(pose, maxConfidence)
     }
 
-    private fun drawPoints(bitmap: Bitmap, pointsArray: FloatArray, scoresArray: FloatArray):Bitmap{
+    private fun drawPoints(bitmap: Bitmap, pointsArray: FloatArray, scoresArray: FloatArray, pointSize: Int):Bitmap{
         val paint = Paint()
         val hsvColor = FloatArray(3)
         hsvColor[1] = 1F
         hsvColor[2] = 1F
-        paint.strokeWidth = bitmap.width.toFloat()/224F*6F
+        paint.strokeWidth = bitmap.width.toFloat()/224F*pointSize
         val canvas = Canvas(bitmap)
         for (i in 0 until 16){
             hsvColor[0] = 120F*scoresArray[i]

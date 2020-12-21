@@ -56,4 +56,5 @@
     <string name="other">Other</string>
     <string name="enableVoiceMessages">Enable voice messages</string>
     <string name="ttsInitFailed">Text to speech initialization failed!</string>
+    <string name="pointSize">Point size</string>
 </resources>

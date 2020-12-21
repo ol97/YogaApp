@@ -51,6 +51,15 @@
             app:key="enableVoiceMessages"
             app:defaultValue="false"
             app:title="@string/enableVoiceMessages"/>
+
+        <SeekBarPreference
+            android:key="pointSize"
+            app:title="@string/pointSize"
+            app:seekBarIncrement="1"
+            android:max="10"
+            app:min="1"
+            app:showSeekBarValue="true"
+            app:defaultValue="5" />
     </PreferenceCategory>
 
 </PreferenceScreen>

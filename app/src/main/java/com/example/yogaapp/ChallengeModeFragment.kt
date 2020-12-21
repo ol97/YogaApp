@@ -67,6 +67,7 @@ class ChallengeModeFragment : Fragment(), PoseEstimatorUser, TextToSpeech.OnInit
     private val KEY_LIST_OF_POSES = "list_of_poses"
     private var enableVoiceMessages: Boolean = false
     private lateinit var tts: TextToSpeech
+    private var pointSize: Int = 5
 
 
     override fun onCreateView(
@@ -112,6 +113,7 @@ class ChallengeModeFragment : Fragment(), PoseEstimatorUser, TextToSpeech.OnInit
         showFPS = preferences.getBoolean("showFPS", true)
         holdTimeThreshold = preferences.getInt("holdPoseThreshold", 1)
         enableVoiceMessages = preferences.getBoolean("enableVoiceMessages", false)
+        pointSize = preferences.getInt("pointSize", 5)
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -155,7 +157,7 @@ class ChallengeModeFragment : Fragment(), PoseEstimatorUser, TextToSpeech.OnInit
 
         analyzer = PoseEstimator(
             requireContext(),
-            modelType, this)
+            modelType, this, pointSize)
         analyzer.updateThreshold(confidenceThreshold)
 
         if (allPermissionsGranted()) {

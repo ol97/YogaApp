@@ -62,6 +62,7 @@ class RecorderFragment : Fragment(), PoseEstimatorUser {
     private val KEY_LIST_OF_POSES = "list_of_poses"
     private var recordingFlag: Boolean = false
     private var listOfPoses: MutableList<TimestampedPose> = mutableListOf()
+    private var pointSize: Int = 5
 
 
     override fun onCreateView(
@@ -164,6 +165,7 @@ class RecorderFragment : Fragment(), PoseEstimatorUser {
         timeThreshold = preferences.getInt("timeThreshold", 1)
         modelType = preferences.getString("modelType", "RT").toString()
         showFPS = preferences.getBoolean("showFPS", true)
+        pointSize = preferences.getInt("pointSize", 5)
 
     }
 
@@ -197,7 +199,7 @@ class RecorderFragment : Fragment(), PoseEstimatorUser {
 
         analyzer = PoseEstimator(
                 requireContext(),
-                modelType, this)
+                modelType, this, pointSize)
         analyzer.updateThreshold(confidenceThreshold)
 
         if (allPermissionsGranted()) {
