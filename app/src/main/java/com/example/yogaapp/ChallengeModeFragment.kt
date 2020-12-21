@@ -11,6 +11,7 @@ import android.hardware.SensorManager
 import android.os.Bundle
 import android.os.Parcelable
 import android.os.SystemClock
+import android.speech.tts.TextToSpeech
 import android.util.DisplayMetrics
 import android.util.Log
 import android.util.Size
@@ -25,7 +26,7 @@ import androidx.navigation.fragment.findNavController
 import androidx.preference.PreferenceManager
 import kotlinx.coroutines.*
 import kotlinx.coroutines.Dispatchers.Main
-import java.util.ArrayList
+import java.util.*
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
@@ -33,7 +34,7 @@ import kotlin.math.round
 import kotlin.random.Random.Default.nextInt
 
 
-class ChallengeModeFragment : Fragment(), PoseEstimatorUser {
+class ChallengeModeFragment : Fragment(), PoseEstimatorUser, TextToSpeech.OnInitListener {
     private lateinit var cameraExecutor: ExecutorService
     private lateinit var textureView: TextureView
     private lateinit var textViewFPS: TextView
@@ -64,6 +65,8 @@ class ChallengeModeFragment : Fragment(), PoseEstimatorUser {
     private lateinit var textViewTargetPose: TextView
     private val KEY_TARGET_POSE = "target_pose"
     private val KEY_LIST_OF_POSES = "list_of_poses"
+    private var enableVoiceMessages: Boolean = false
+    private lateinit var tts: TextToSpeech
 
 
     override fun onCreateView(
@@ -75,6 +78,7 @@ class ChallengeModeFragment : Fragment(), PoseEstimatorUser {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         loadSettings()
+        tts = TextToSpeech(context, this)
         imageButtonSettings = view.findViewById(R.id.imageButtonSettings)
         imageButtonSettings.setOnClickListener {
             findNavController().navigate(R.id.action_challengeModeFragment_to_settingsFragment)
@@ -107,6 +111,7 @@ class ChallengeModeFragment : Fragment(), PoseEstimatorUser {
         modelType = preferences.getString("modelType", "RT").toString()
         showFPS = preferences.getBoolean("showFPS", true)
         holdTimeThreshold = preferences.getInt("holdPoseThreshold", 1)
+        enableVoiceMessages = preferences.getBoolean("enableVoiceMessages", false)
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -261,6 +266,10 @@ class ChallengeModeFragment : Fragment(), PoseEstimatorUser {
         cameraExecutor.shutdown()
         cameraExecutor.awaitTermination(3000, TimeUnit.MILLISECONDS)
         analyzer.releaseResources()
+        if (tts != null) {
+            tts!!.stop()
+            tts!!.shutdown()
+        }
     }
 
     override fun onSaveInstanceState(outState: Bundle) {
@@ -428,6 +437,10 @@ class ChallengeModeFragment : Fragment(), PoseEstimatorUser {
         while(newPose == targetPose)
         targetPose = newPose
         listOfPoses.clear()
+        if (enableVoiceMessages)
+        {
+            tts!!.speak(targetPose, TextToSpeech.QUEUE_FLUSH, null, "")
+        }
     }
 
     private suspend fun greenSignal()
@@ -437,6 +450,20 @@ class ChallengeModeFragment : Fragment(), PoseEstimatorUser {
             textViewTargetPose.setBackgroundColor(Color.GREEN)
             delay(500)
             textViewTargetPose.setBackgroundColor(Color.BLACK)
+        }
+    }
+
+    override fun onInit(status: Int) {
+        if (status == TextToSpeech.SUCCESS) {
+            val result = tts.setLanguage(Locale.ENGLISH)
+
+            if (result == TextToSpeech.LANG_MISSING_DATA || result == TextToSpeech.LANG_NOT_SUPPORTED) {
+                Log.e("TTS","The Language specified is not supported!")
+                val toast = Toast.makeText(context, R.string.ttsInitFailed, Toast.LENGTH_LONG)
+                toast.show()
+            }
+        } else {
+            Log.e("TTS", "Initilization Failed!")
         }
     }
 }

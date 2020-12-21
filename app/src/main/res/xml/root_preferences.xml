@@ -39,11 +39,18 @@
 
     </PreferenceCategory>
 
-    <PreferenceCategory app:title="UI Elements">
+    <PreferenceCategory app:title="@string/uiElements">
         <SwitchPreferenceCompat
             app:key="showFPS"
             app:defaultValue="true"
             app:title="@string/showTimePerFrame"/>
+    </PreferenceCategory>
+
+    <PreferenceCategory app:title="@string/other">
+        <SwitchPreferenceCompat
+            app:key="enableVoiceMessages"
+            app:defaultValue="false"
+            app:title="@string/enableVoiceMessages"/>
     </PreferenceCategory>
 
 </PreferenceScreen>

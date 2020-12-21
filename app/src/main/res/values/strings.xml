@@ -52,4 +52,8 @@
     <string name="filteringTimeThreshold">Filtering time threshold (seconds)</string>
     <string name="holdPoseThreshold">Pose hold time threshold (seconds)</string>
     <string name="showTimePerFrame">Show time per frame</string>
+    <string name="uiElements">UI elements</string>
+    <string name="other">Other</string>
+    <string name="enableVoiceMessages">Enable voice messages</string>
+    <string name="ttsInitFailed">Text to speech initialization failed!</string>
 </resources>
