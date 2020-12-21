@@ -13,6 +13,7 @@ import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.findNavController
 import androidx.navigation.fragment.navArgs
 import com.example.yogaapp.database.ArchiveHelper
+import java.lang.Integer.parseInt
 import java.lang.Long.parseLong
 
 
@@ -33,7 +34,6 @@ class SessionDetailsFragment : Fragment() {
             inflater: LayoutInflater, container: ViewGroup?,
             savedInstanceState: Bundle?
     ): View? {
-        // Inflate the layout for this fragment
         return inflater.inflate(R.layout.fragment_session_details, container, false)
     }
 
@@ -49,18 +49,18 @@ class SessionDetailsFragment : Fragment() {
         buttonDelete = view.findViewById(R.id.buttonDelete)
         buttonRename = view.findViewById(R.id.buttonRename)
 
-        textViewName.text = "Name: " + args.name
-        textViewDate.text = "Date: " + args.date
-        textViewHour.text = "Time: "+ args.hour
-        textViewDuration.text = "Duration: " + (parseLong(args.duration)/1000F).toString() + "seconds"
+        textViewName.text = getString(R.string.nameTextView, args.name)
+        textViewDate.text = getString(R.string.dateTextView, args.date)
+        textViewHour.text = getString(R.string.hourTextView, args.hour)
+        textViewDuration.text = getString(R.string.durationTextView, (parseLong(args.duration)/1000F).toInt())
 
         buttonDelete.setOnClickListener {
 
             val alert = context?.let { it1 -> AlertDialog.Builder(it1) }
-            alert?.setTitle("Warning")
-            alert?.setMessage("Confirm deletion")
+            alert?.setTitle(getString(R.string.warning))
+            alert?.setMessage(getString(R.string.deleteConfirmation))
 
-            alert?.setPositiveButton("DELETE") { dialog, whichButton ->
+            alert?.setPositiveButton(getString(R.string.delete)) { dialog, whichButton ->
                 context?.let { it1 ->
                     val ok = ArchiveHelper.getInstance(it1)?.deleteSession(args.sessionid)
                     if (ok!!) {
@@ -69,7 +69,7 @@ class SessionDetailsFragment : Fragment() {
                 }
             }
 
-            alert?.setNegativeButton("CANCEL"
+            alert?.setNegativeButton(getString(R.string.cancel)
             ) { dialog, which ->
             }
             alert?.show()
@@ -77,19 +77,19 @@ class SessionDetailsFragment : Fragment() {
 
         buttonRename.setOnClickListener {
             val alert = context?.let { it1 -> AlertDialog.Builder(it1) }
-            alert?.setTitle("Rename")
-            alert?.setMessage("Insert new name")
+            alert?.setTitle(getString(R.string.rename))
+            alert?.setMessage(getString(R.string.insertNewName))
 
             val input = EditText(context)
             alert?.setView(input)
 
-            alert?.setPositiveButton("Ok") { dialog, whichButton ->
+            alert?.setPositiveButton(getString(R.string.ok)) { dialog, whichButton ->
                 val value = input.text.toString()
                 context?.let { it1 -> ArchiveHelper.getInstance(it1)?.changeSessionName(value, args.sessionid) }
                 updateUI()
             }
 
-            alert?.setNegativeButton("Cancel"
+            alert?.setNegativeButton(getString(R.string.cancel)
             ) { dialog, which ->
             }
             alert?.show()
@@ -99,18 +99,7 @@ class SessionDetailsFragment : Fragment() {
     override fun onResume() {
         super.onResume()
 
-        val detailedData = context?.let {
-            ArchiveHelper.getInstance(it)?.readDetailedSessionData(args.sessionid) }
-
-        for (i in detailedData!!.indices)
-        {
-            val oldText = textViewPoses.text
-            val newText = oldText.toString() + detailedData[i][0] + " " +
-                    detailedData[i][1] + "   " + (parseLong(detailedData[i][2])/1000F).toString() +
-                    " seconds" + "\n"
-            textViewPoses.text = newText
-        }
-
+        updateUI()
     }
 
     private fun updateUI(){
@@ -123,17 +112,17 @@ class SessionDetailsFragment : Fragment() {
             val oldText = textViewPoses.text
             val newText = oldText.toString() + detailedData[i][0] + " " +
                     detailedData[i][1] + "   " + (parseLong(detailedData[i][2])/1000F).toString() +
-                    " seconds" + "\n"
+                    " " + getString(R.string.seconds) + "\n"
             textViewPoses.text = newText
         }
 
         val sessionData = context?.let { ArchiveHelper.getInstance(it)?.readSessionData(args.sessionid) }
         if (sessionData!!.isNotEmpty())
         {
-            textViewDate.text = "Date: " + sessionData[2]
-            textViewName.text = "Name: " + sessionData[1]
-            textViewHour.text = "Time: " + sessionData[3]
-            textViewDuration.text = "Duration: " + sessionData[4]
+            textViewDate.text = getString(R.string.dateTextView, sessionData[2])
+            textViewName.text = getString(R.string.nameTextView, sessionData[1])
+            textViewHour.text = getString(R.string.hourTextView, sessionData[3])
+            textViewDuration.text = getString(R.string.durationTextView, parseInt(sessionData[4]))
         }
     }
 

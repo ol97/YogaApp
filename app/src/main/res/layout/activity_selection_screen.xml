@@ -16,21 +16,21 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:padding="16dp"
-            android:text="Challenge Mode" />
+            android:text="@string/challengeModeButton" />
 
         <Button
             android:id="@+id/buttonRecorder"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:padding="16dp"
-            android:text="Recorder" />
+            android:text="@string/recorderModeButton" />
 
         <Button
             android:id="@+id/buttonHistory"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:padding="16dp"
-            android:text="History" />
+            android:text="@string/historyButton" />
 
     </LinearLayout>
 </FrameLayout>

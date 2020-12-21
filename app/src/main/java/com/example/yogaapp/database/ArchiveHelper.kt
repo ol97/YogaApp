@@ -121,7 +121,6 @@ class ArchiveHelper(context: Context) {
         try{
             val a = database.update(ArchiveDbSchema.SessionTable.TABLE_NAME, values,
                     ArchiveDbSchema.SessionTable.Cols.ID+" = CAST(? AS INTEGER)", arrayOf(sessionId))
-            Log.d("ALW", a.toString())
         }
         catch (e: Exception)
         {

@@ -316,17 +316,13 @@ class ChallengeModeFragment : Fragment(), PoseEstimatorUser {
                 textureView.scaleX = -1F
             }
 
-            textViewFPS.text = "Time Per Frame: " +
-                    (timestamp - lastUpdated).toString() + "ms"
-            textViewPoseConfidence.text = "Confidence: " + (round(confidence * 10000) / 100).toString() + "%"
-            textViewPose.text = "Pose: " + pose
+            textViewFPS.text = getString(R.string.timePerFrameTextView, (timestamp - lastUpdated).toInt())
+            textViewPoseConfidence.text = getString(R.string.confidenceTextView, (confidence * 10000 / 100).toInt())
+            textViewPose.text = getString(R.string.poseTextView, pose)
+            textViewTargetPose.text = getString(R.string.targetPoseTextView, targetPose)
             lastUpdated = timestamp
-            textViewTargetPose.text = "Target pose: " + targetPose
         }
     }
-
-
-
 
 
     private fun allPermissionsGranted() = REQUIRED_PERMISSIONS.all {
@@ -344,7 +340,7 @@ class ChallengeModeFragment : Fragment(), PoseEstimatorUser {
             } else {
                 Toast.makeText(
                     context,
-                    "Permissions not granted by the user.",
+                    getString(R.string.permissionNotGranted),
                     Toast.LENGTH_SHORT
                 ).show()
                 activity?.finish()
@@ -381,18 +377,18 @@ class ChallengeModeFragment : Fragment(), PoseEstimatorUser {
     private fun randomPose(): String
     {
         val randomNumber = nextInt(10)
-        var pose = "Unknown"
+        var pose = getString(R.string.unknownPose)
         when (randomNumber) {
-            0 -> {pose = "Tree Pose"}
-            1 -> {pose = "Warrior I Pose"}
-            2 -> {pose = "Downward Dog Pose"}
-            3 -> {pose = "Mountain Pose"}
-            4 -> {pose = "Warrior II Pose"}
-            5 -> {pose = "Bow Pose"}
-            6 -> {pose = "Camel Pose"}
-            7 -> {pose = "Plank Pose"}
-            8 -> {pose = "Chair Pose"}
-            9 -> {pose = "Garland Pose"}
+            0 -> {pose = getString(R.string.treePose)}
+            1 -> {pose = getString(R.string.warriorIPose)}
+            2 -> {pose = getString(R.string.downwardDogPose)}
+            3 -> {pose = getString(R.string.mountainPose)}
+            4 -> {pose = getString(R.string.warriorIIPose)}
+            5 -> {pose = getString(R.string.bowPose)}
+            6 -> {pose = getString(R.string.camelPose)}
+            7 -> {pose = getString(R.string.plankPose)}
+            8 -> {pose = getString(R.string.chairPose)}
+            9 -> {pose = getString(R.string.garlandPose)}
         }
         return pose
     }

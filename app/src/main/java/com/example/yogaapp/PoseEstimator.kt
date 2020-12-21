@@ -14,6 +14,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers.Default
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.tensorflow.lite.DataType
 import org.tensorflow.lite.support.common.ops.NormalizeOp
 import org.tensorflow.lite.support.image.ImageProcessor
@@ -44,6 +45,17 @@ class PoseEstimator(context: Context, private val type:String,
     private var classifier: FinalClassifier
     private var analysisInProgress: Boolean = false
     private var rotation: Float = 90F
+    private var treePoseString: String = context.getString(R.string.treePose)
+    private var mountainPoseString: String = context.getString(R.string.mountainPose)
+    private var warriorIPoseString: String = context.getString(R.string.warriorIPose)
+    private var warriorIIPoseString: String = context.getString(R.string.warriorIIPose)
+    private var plankPoseString: String = context.getString(R.string.plankPose)
+    private var chairPoseString: String = context.getString(R.string.chairPose)
+    private var garlandPoseString: String = context.getString(R.string.garlandPose)
+    private var downwardDogPoseString: String = context.getString(R.string.downwardDogPose)
+    private var bowPoseString: String = context.getString(R.string.bowPose)
+    private var camelPoseString: String = context.getString(R.string.camelPose)
+    private var unknownPoseString: String = context.getString(R.string.unknownPose)
 
     private val mean  = floatArrayOf(-0.00833482F, -0.62727004F,  0.00146041F,
         -0.38550275F, -0.15284604F, -0.3669925F, -0.23114573F, -0.18421048F, -0.20711644F,
@@ -131,16 +143,14 @@ class PoseEstimator(context: Context, private val type:String,
         if (parsingJob == null)
         {
             parsingJob = CoroutineScope(Default).launch{
-                parseOutput(inputSize, outputBufferEstimator, bitmap, confidenceThreshold,
-                    poseEstimatorUser)
+                parseOutput(inputSize, outputBufferEstimator, bitmap, poseEstimatorUser)
             }
         }
         else
         {
             while(!parsingJob!!.isCompleted){val pass = Unit}
             parsingJob = CoroutineScope(Default).launch{
-                parseOutput(inputSize, outputBufferEstimator, bitmap, confidenceThreshold,
-                    poseEstimatorUser)
+                parseOutput(inputSize, outputBufferEstimator, bitmap, poseEstimatorUser)
             }
         }
         analysisInProgress = false
@@ -148,7 +158,7 @@ class PoseEstimator(context: Context, private val type:String,
     }
 
     private suspend fun parseOutput(inputSize: Size, outputBuffer: TensorBuffer, bitmap: Bitmap,
-                                    confidenceThreshold: Int, poseEstimatorUser: PoseEstimatorUser){
+                                    poseEstimatorUser: PoseEstimatorUser){
         val pointsArray = FloatArray(32)
         val xArray = FloatArray(16)
         val yArray = FloatArray(16)
@@ -215,19 +225,19 @@ class PoseEstimator(context: Context, private val type:String,
             maxConfidence = 1F
         }
 
-        var pose = "Unknown"
+        var pose = "Unknown Pose"
         when (indexOfMax) {
-            0 -> {pose = "Tree Pose"}
-            1 -> {pose = "Warrior I Pose"}
-            2 -> {pose = "Downward Dog Pose"}
-            3 -> {pose = "Mountain Pose"}
-            4 -> {pose = "Warrior II Pose"}
-            5 -> {pose = "Bow Pose"}
-            6 -> {pose = "Camel Pose"}
-            7 -> {pose = "Plank Pose"}
-            8 -> {pose = "Chair Pose"}
-            9 -> {pose = "Garland Pose"}
-            10 -> {pose = "Unknown Pose"}
+            0 -> {pose = treePoseString}
+            1 -> {pose = warriorIPoseString}
+            2 -> {pose = downwardDogPoseString}
+            3 -> {pose = mountainPoseString}
+            4 -> {pose = warriorIIPoseString}
+            5 -> {pose = bowPoseString}
+            6 -> {pose = camelPoseString}
+            7 -> {pose = plankPoseString}
+            8 -> {pose = chairPoseString}
+            9 -> {pose = garlandPoseString}
+            10 -> {pose = unknownPoseString}
         }
         return Pair(pose, maxConfidence)
     }

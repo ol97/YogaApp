@@ -32,7 +32,7 @@
             app:layout_rowWeight="1"
             android:layout_marginLeft="16dp"
             android:padding="16dp"
-            android:text="Name:" />
+            android:text="@string/nameTextView" />
 
         <TextView
             android:id="@+id/textViewDuration"
@@ -42,7 +42,7 @@
             app:layout_columnWeight="1"
             app:layout_rowWeight="1"
             android:padding="16dp"
-            android:text="Duration:" />
+            android:text="@string/durationTextView" />
 
         <TextView
             android:id="@+id/textViewDate"
@@ -52,7 +52,7 @@
             app:layout_columnWeight="1"
             app:layout_rowWeight="1"
             android:padding="16dp"
-            android:text="Date:" />
+            android:text="@string/dateTextView" />
 
         <TextView
             android:id="@+id/textViewHour"
@@ -62,7 +62,7 @@
             app:layout_columnWeight="1"
             app:layout_rowWeight="1"
             android:padding="16dp"
-            android:text="Hour:" />
+            android:text="@string/hourTextView" />
     </androidx.gridlayout.widget.GridLayout>
 
     <Button
@@ -72,7 +72,7 @@
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintRight_toLeftOf="@id/buttonRename"
         android:padding="16dp"
-        android:text="DELETE"
+        android:text="@string/delete"
         app:layout_constraintBottom_toBottomOf="parent" />
 
     <Button
@@ -82,6 +82,6 @@
         android:padding="16dp"
         app:layout_constraintRight_toRightOf="parent"
         app:layout_constraintLeft_toRightOf="@id/buttonDelete"
-        android:text="RENAME"
+        android:text="@string/rename"
         app:layout_constraintBottom_toBottomOf="parent" />
 </androidx.constraintlayout.widget.ConstraintLayout>

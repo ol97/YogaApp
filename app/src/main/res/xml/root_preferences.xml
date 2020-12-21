@@ -1,28 +1,28 @@
 <PreferenceScreen xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:android="http://schemas.android.com/apk/res/android">
 
-    <PreferenceCategory app:title="Pose Estimation Model">
+    <PreferenceCategory app:title="@string/poseEstimationModel">
 
         <ListPreference
             app:defaultValue="RT"
             app:entries="@array/reply_entries"
             app:entryValues="@array/reply_values"
             app:key="modelType"
-            app:title="Pose estimation model"
+            app:title="@string/poseEstimationModel"
             app:useSimpleSummaryProvider="true" />
 
     </PreferenceCategory>
 
-    <PreferenceCategory app:title="Thresholds">
+    <PreferenceCategory app:title="@string/thresholds">
         <SeekBarPreference
             android:key="confidenceThreshold"
-            app:title="Pose estimation confidence threshold"
+            app:title="@string/poseEstimationConfidenceThreshold"
             app:showSeekBarValue="true"
             app:defaultValue="20" />
 
         <SeekBarPreference
             android:key="timeThreshold"
-            app:title="Filtering time threshold (seconds)"
+            app:title="@string/filteringTimeThreshold"
             app:seekBarIncrement="1"
             android:max="10"
             app:showSeekBarValue="true"
@@ -30,7 +30,7 @@
 
         <SeekBarPreference
             android:key="holdPoseThreshold"
-            app:title="Holding pose time (seconds)"
+            app:title="@string/holdPoseThreshold"
             app:seekBarIncrement="1"
             android:max="10"
             app:min="1"
@@ -43,7 +43,7 @@
         <SwitchPreferenceCompat
             app:key="showFPS"
             app:defaultValue="true"
-            app:title="Show time per frame"/>
+            app:title="@string/showTimePerFrame"/>
     </PreferenceCategory>
 
 </PreferenceScreen>

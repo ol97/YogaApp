@@ -10,9 +10,7 @@ import android.view.View
 import android.view.ViewGroup
 import com.example.yogaapp.database.ArchiveHelper
 
-/**
- * A fragment representing a list of Items.
- */
+
 class ItemListFragment : Fragment() {
 
     private var columnCount = 1

@@ -111,29 +111,29 @@ class RecorderFragment : Fragment(), PoseEstimatorUser {
             {
 
                 val alert = context?.let { it1 -> AlertDialog.Builder(it1) }
-                alert?.setTitle("Set name")
-                alert?.setMessage("Insert name")
+                alert?.setTitle(getString(R.string.setName))
+                alert?.setMessage(getString(R.string.insertName))
                 val input = EditText(context)
                 alert?.setView(input)
                 val names = context?.let { ArchiveHelper.getInstance(it) }!!.readSessionNames()
-                alert?.setPositiveButton("Save") { dialog, whichButton -> }
-                alert?.setNegativeButton("Cancel") { dialog, which -> }
+                alert?.setPositiveButton(getString(R.string.save)) { dialog, whichButton -> }
+                alert?.setNegativeButton(getString(R.string.cancel)) { dialog, which -> }
                 val dialog = alert!!.create()
                 dialog.show()
                 dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener{
                     val value = input.text.toString()
                     if (names.contains(value)) {
-                        val toast = Toast.makeText(context, "Name already in use!", Toast.LENGTH_SHORT)
+                        val toast = Toast.makeText(context, getString(R.string.nameInUse), Toast.LENGTH_SHORT)
                         toast.show()
                     } else {
                         context?.let {
                             val archiveHelper = ArchiveHelper.getInstance(it)
                             val ok = archiveHelper?.insertSession(filterListOfPoses(listOfPoses), value)
                             if (!ok!!) {
-                                val toast = Toast.makeText(context, "Saving failed!", Toast.LENGTH_SHORT)
+                                val toast = Toast.makeText(context, getString(R.string.savingFailed), Toast.LENGTH_SHORT)
                                 toast.show()
                             } else {
-                                val toast = Toast.makeText(context, "Saving succeeded!", Toast.LENGTH_SHORT)
+                                val toast = Toast.makeText(context, getString(R.string.savingSucceeded), Toast.LENGTH_SHORT)
                                 toast.show()
                                 dialog.dismiss()
                             }
@@ -358,10 +358,9 @@ class RecorderFragment : Fragment(), PoseEstimatorUser {
                 textureView.scaleX = -1F
             }
 
-            textViewFPS.text = "Time Per Frame: " +
-                    (timestamp - lastUpdated).toString() + "ms"
-            textViewPoseConfidence.text = "Confidence: " + (round(confidence * 10000) / 100).toString() + "%"
-            textViewPose.text = "Pose: " + pose
+            textViewFPS.text = getString(R.string.timePerFrameTextView, (timestamp - lastUpdated).toInt())
+            textViewPoseConfidence.text = getString(R.string.confidenceTextView, (confidence * 10000 / 100).toInt())
+            textViewPose.text = getString(R.string.poseTextView, pose)
             lastUpdated = timestamp
         }
     }
@@ -382,7 +381,7 @@ class RecorderFragment : Fragment(), PoseEstimatorUser {
             } else {
                 Toast.makeText(
                         context,
-                        "Permissions not granted by the user.",
+                        getString(R.string.permissionNotGranted),
                         Toast.LENGTH_SHORT
                 ).show()
                 activity?.finish()

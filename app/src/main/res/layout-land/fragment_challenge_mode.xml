@@ -5,7 +5,6 @@
     android:id="@+id/relativeLayout"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/black"
     tools:context=".ChallengeModeFragment">
 
     <TextureView
@@ -21,7 +20,6 @@
         android:id="@+id/layout_top"
         android:layout_width="200dp"
         android:layout_height="wrap_content"
-        android:background="@color/black"
         android:orientation="vertical"
         android:paddingLeft="8dp"
         android:paddingTop="8dp"
@@ -34,7 +32,7 @@
             android:layout_height="wrap_content"
             android:gravity="left"
             android:padding="8dp"
-            android:text="Time Per Frame:" />
+            android:text="@string/timePerFrameTextViewEmpty" />
 
         <TextView
             android:id="@+id/textViewPose"
@@ -42,7 +40,7 @@
             android:layout_height="wrap_content"
             android:gravity="left"
             android:padding="8dp"
-            android:text="Pose:" />
+            android:text="@string/poseTextViewEmpty" />
 
         <TextView
             android:id="@+id/textViewPoseConfidence"
@@ -50,7 +48,7 @@
             android:layout_height="wrap_content"
             android:gravity="left"
             android:padding="8dp"
-            android:text="Confidence:" />
+            android:text="@string/confidenceTextViewEmpty" />
     </LinearLayout>
 
 
@@ -58,7 +56,6 @@
         android:id="@+id/layout_bottom"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:background="@color/black"
         android:orientation="vertical"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintLeft_toLeftOf="parent"
@@ -70,7 +67,7 @@
             android:layout_height="wrap_content"
             android:gravity="left"
             android:padding="8dp"
-            android:text="Target pose:" />
+            android:text="@string/targetPoseTextViewEmpty" />
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -93,7 +90,7 @@
                 android:layout_weight="1"
                 android:backgroundTint="@color/white"
                 android:padding="16dp"
-                android:text="Next"
+                android:text="@string/next"
                 android:textColor="@color/black" />
 
             <ImageButton
