@@ -16,6 +16,7 @@
     <string name="permissionNotGranted">Permissions not granted by the user.</string>
     <string name="setName">Set name</string>
     <string name="insertName">Name:</string>
+    <string name="nameTooLong">Name is too long!</string>
     <string name="save">Save</string>
     <string name="cancel">Cancel</string>
     <string name="nameInUse">Name already in use!</string>

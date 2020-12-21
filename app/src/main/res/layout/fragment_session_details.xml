@@ -26,7 +26,7 @@
 
         <TextView
             android:id="@+id/textViewName"
-            android:layout_width="wrap_content"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
             app:layout_columnWeight="1"
             app:layout_rowWeight="1"
@@ -36,7 +36,7 @@
 
         <TextView
             android:id="@+id/textViewDuration"
-            android:layout_width="wrap_content"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_marginLeft="16dp"
             app:layout_columnWeight="1"
@@ -46,7 +46,7 @@
 
         <TextView
             android:id="@+id/textViewDate"
-            android:layout_width="wrap_content"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_marginLeft="16dp"
             app:layout_columnWeight="1"
@@ -56,7 +56,7 @@
 
         <TextView
             android:id="@+id/textViewTime"
-            android:layout_width="wrap_content"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_marginLeft="16dp"
             app:layout_columnWeight="1"

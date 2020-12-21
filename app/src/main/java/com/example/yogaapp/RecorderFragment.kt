@@ -109,7 +109,6 @@ class RecorderFragment : Fragment(), PoseEstimatorUser {
             }
             if (!isChecked && listOfPoses.lastIndex > 2)
             {
-
                 val alert = context?.let { it1 -> AlertDialog.Builder(it1) }
                 alert?.setTitle(getString(R.string.setName))
                 alert?.setMessage(getString(R.string.insertName))
@@ -125,7 +124,12 @@ class RecorderFragment : Fragment(), PoseEstimatorUser {
                     if (names.contains(value)) {
                         val toast = Toast.makeText(context, getString(R.string.nameInUse), Toast.LENGTH_SHORT)
                         toast.show()
-                    } else {
+                    }
+                    else if (input.text.toString().length >= 20){
+                        val toast = Toast.makeText(context, getString(R.string.nameTooLong), Toast.LENGTH_SHORT)
+                        toast.show()
+                    }
+                    else {
                         context?.let {
                             val archiveHelper = ArchiveHelper.getInstance(it)
                             val ok = archiveHelper?.insertSession(filterListOfPoses(listOfPoses), value)
