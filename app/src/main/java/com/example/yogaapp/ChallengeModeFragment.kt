@@ -326,10 +326,10 @@ class ChallengeModeFragment : Fragment(), PoseEstimatorUser, TextToSpeech.OnInit
                 textureView.scaleX = -1F
             }
 
-            textViewFPS.text = getString(R.string.timePerFrameTextView, (timestamp - lastUpdated).toInt())
-            textViewPoseConfidence.text = getString(R.string.confidenceTextView, (confidence * 10000 / 100).toInt())
-            textViewPose.text = getString(R.string.poseTextView, pose)
-            textViewTargetPose.text = getString(R.string.targetPoseTextView, targetPose)
+            textViewFPS.text = activity?.getString(R.string.timePerFrameTextView, (timestamp - lastUpdated).toInt())
+            textViewPoseConfidence.text = activity?.getString(R.string.confidenceTextView, (confidence * 10000 / 100).toInt())
+            textViewPose.text = activity?.getString(R.string.poseTextView, pose)
+            textViewTargetPose.text = activity?.getString(R.string.targetPoseTextView, targetPose)
             lastUpdated = timestamp
         }
     }

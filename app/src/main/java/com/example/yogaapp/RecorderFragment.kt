@@ -2,6 +2,8 @@ package com.example.yogaapp
 
 import android.Manifest
 import android.annotation.SuppressLint
+import android.app.Application
+import android.content.Context
 import android.content.SharedPreferences
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
@@ -363,10 +365,9 @@ class RecorderFragment : Fragment(), PoseEstimatorUser {
             } else {
                 textureView.scaleX = -1F
             }
-
-            textViewFPS.text = getString(R.string.timePerFrameTextView, (timestamp - lastUpdated).toInt())
-            textViewPoseConfidence.text = getString(R.string.confidenceTextView, (confidence * 10000 / 100).toInt())
-            textViewPose.text = getString(R.string.poseTextView, pose)
+            textViewFPS.text = activity?.getString(R.string.timePerFrameTextView, (timestamp - lastUpdated).toInt())
+            textViewPoseConfidence.text = activity?.getString(R.string.confidenceTextView, (confidence * 10000 / 100).toInt())
+            textViewPose.text = activity?.getString(R.string.poseTextView, pose)
             lastUpdated = timestamp
         }
     }
