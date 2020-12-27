@@ -41,7 +41,7 @@
     <string name="chairPose">Chair pose</string>
     <string name="unknownPose">Unknown pose</string>
     <string name="challengeModeButton">Challenge Mode</string>
-    <string name="recorderModeButton">Recorder Mode</string>
+    <string name="recorderModeButton">Recording Mode</string>
     <string name="historyButton">History</string>
     <string name="next">Next</string>
     <string name="startRecording">Start recording</string>
@@ -57,4 +57,26 @@
     <string name="enableVoiceMessages">Enable voice messages</string>
     <string name="ttsInitFailed">Text to speech initialization failed!</string>
     <string name="pointSize">Point size</string>
+    <string name="about">About</string>
+    <string name="whatIsYogaApp">What is YogaApp?</string>
+    <string name="aboutYogaApp">*Placeholder text, app description, my app is the best, blah blah blah.
+        * *Placeholder text, app description, my app is the best, blah blah blah.*
+        *Placeholder text, app description, my app is the best, blah blah blah.*</string>
+    <string name="supportedPoses">Supported poses</string>
+    <string name="aboutSupportedPoses">The classifier used in YogaApp can recognize ten popular yoga poses (list below).
+        For different poses, either a side view or a front view is required.
+        In the case of poses requiring side view, it does not matter whether you are facing left or right.</string>
+    <string name="modes">Modes of operation</string>
+    <string name="modesDescription">In the challenge mode, your goal is to perform the pose indicated by
+        the application and holding it for a set amount of time. If a pose is too difficult,
+        you can use the "SKIP" button to move to the next pose.
+        Recording mode can be used to save the course of your yoga training. You can view a list
+        of poses and the time you held them for in the history tab.</string>
+    <string name="poseEstimationModelDescription">YogaApp uses EfficientPose
+        (<a href="https://arxiv.org/abs/2004.12186">paper</a>, <a href="https://github.com/daniegr/EfficientPose">Github</a>)
+        models (RT, I, II, III) and a custom classifier to recognize yoga poses.
+        <a href="https://sites.google.com/view/yoga-82/home">Yoga82</a>
+        and <a href="https://www.amarchenkova.com/2018/12/04/data-set-convolutional-neural-network-yoga-pose/">Anastasia Marchenkova\'s</a>
+        datasets were used during the training of the classifier.</string>
+    <string name="developedBy">Developed by: Łukasz Olejnik</string>
 </resources>

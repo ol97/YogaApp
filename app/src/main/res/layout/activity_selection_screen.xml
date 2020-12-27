@@ -32,5 +32,12 @@
             android:padding="16dp"
             android:text="@string/historyButton" />
 
+        <Button
+            android:id="@+id/buttonAbout"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:padding="16dp"
+            android:text="@string/about" />
+
     </LinearLayout>
 </FrameLayout>

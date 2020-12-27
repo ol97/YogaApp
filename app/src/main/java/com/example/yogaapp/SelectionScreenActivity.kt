@@ -32,5 +32,11 @@ class SelectionScreenActivity : AppCompatActivity() {
             val intent = Intent(this, ArchiveActivity::class.java)
             startActivity(intent)
         }
+
+        val buttonAbout = findViewById<Button>(R.id.buttonAbout)
+        buttonAbout.setOnClickListener{
+            val intent = Intent(this, AboutActivity::class.java)
+            startActivity(intent)
+        }
     }
 }
