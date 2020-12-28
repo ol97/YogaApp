@@ -70,6 +70,48 @@ class ChallengeModeFragment : Fragment(), PoseEstimatorUser, TextToSpeech.OnInit
     private var pointSize: Int = 5
 
 
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+
+        loadSettings()
+        tts = TextToSpeech(context, this)
+        val displayMetrics = DisplayMetrics()
+        activity?.windowManager?.defaultDisplay?.getMetrics(displayMetrics)
+        displayHeight = displayMetrics.heightPixels
+        displayWidth = displayMetrics.widthPixels
+        targetPose = randomPose()
+
+        if (modelType == "I"){
+            targetSize = Size(256, 256)
+        }
+        if (modelType == "II"){
+            targetSize = Size(368, 368)
+        }
+        if (modelType == "III"){
+            targetSize = Size(480, 480)
+        }
+        if (modelType == "RT"){
+            targetSize = Size(224, 224)
+        }
+
+        analyzer = PoseEstimator(
+                requireContext(),
+                modelType, this)
+        analyzer.updateThreshold(confidenceThreshold)
+        analyzer.setPointSize(pointSize)
+
+        if (savedInstanceState != null)
+        {
+            targetPose = savedInstanceState.getString(KEY_TARGET_POSE).toString()
+            listOfPoses = savedInstanceState.getParcelableArrayList<TimestampedPose>(KEY_LIST_OF_POSES) as MutableList<TimestampedPose>
+            if (savedInstanceState.getBoolean(LENS_FACING_KEY)) {
+                lensFacing = CameraSelector.DEFAULT_FRONT_CAMERA
+            } else {
+                lensFacing = CameraSelector.DEFAULT_BACK_CAMERA
+            }
+        }
+    }
+
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
@@ -78,8 +120,6 @@ class ChallengeModeFragment : Fragment(), PoseEstimatorUser, TextToSpeech.OnInit
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        loadSettings()
-        tts = TextToSpeech(context, this)
         imageButtonSettings = view.findViewById(R.id.imageButtonSettings)
         imageButtonSettings.setOnClickListener {
             findNavController().navigate(R.id.action_challengeModeFragment_to_settingsFragment)
@@ -98,61 +138,43 @@ class ChallengeModeFragment : Fragment(), PoseEstimatorUser, TextToSpeech.OnInit
         }
     }
 
-    private fun loadSettings(){
-        preferences = PreferenceManager.getDefaultSharedPreferences(context)
-        confidenceThreshold = preferences.getInt("confidenceThreshold", 20)
-        filteringTimeThreshold = preferences.getInt("timeThreshold", 1)
-        modelType = preferences.getString("modelType", "RT").toString()
-        showFPS = preferences.getBoolean("showFPS", true)
-        holdTimeThreshold = preferences.getInt("holdPoseThreshold", 1)
-        enableVoiceMessages = preferences.getBoolean("enableVoiceMessages", false)
-        pointSize = preferences.getInt("pointSize", 5)
-    }
-
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-
-        val displayMetrics = DisplayMetrics()
-        activity?.windowManager?.defaultDisplay?.getMetrics(displayMetrics)
-        displayHeight = displayMetrics.heightPixels
-        displayWidth = displayMetrics.widthPixels
-        targetPose = randomPose()
-
-        if (savedInstanceState != null)
-        {
-            targetPose = savedInstanceState.getString(KEY_TARGET_POSE).toString()
-            listOfPoses = savedInstanceState.getParcelableArrayList<TimestampedPose>(KEY_LIST_OF_POSES) as MutableList<TimestampedPose>
-            if (savedInstanceState.getBoolean(LENS_FACING_KEY)) {
-                lensFacing = CameraSelector.DEFAULT_FRONT_CAMERA
-            } else {
-                lensFacing = CameraSelector.DEFAULT_BACK_CAMERA
-            }
-        }
-    }
-
     override fun onResume() {
         super.onResume()
 
+        val oldModelType = modelType
+        val oldShowFPS = showFPS
+        loadSettings()
+        analyzer.setPointSize(pointSize)
+
+        if (oldModelType != modelType)
+        {
+            if (modelType == "I"){
+                targetSize = Size(256, 256)
+            }
+            if (modelType == "II"){
+                targetSize = Size(368, 368)
+            }
+            if (modelType == "III"){
+                targetSize = Size(480, 480)
+            }
+            if (modelType == "RT"){
+                targetSize = Size(224, 224)
+            }
+
+            analyzer = PoseEstimator(
+                    requireContext(),
+                    modelType, this)
+            analyzer.updateThreshold(confidenceThreshold)
+            analyzer.setPointSize(pointSize)
+        }
+
+        if (oldShowFPS != showFPS)
+        {
+            if (showFPS){textViewFPS.visibility = View.VISIBLE}
+            else {textViewFPS.visibility = View.GONE}
+        }
+
         cameraExecutor = Executors.newSingleThreadExecutor()
-
-        if (modelType == "I"){
-            targetSize = Size(256, 256)
-        }
-        if (modelType == "II"){
-            targetSize = Size(368, 368)
-        }
-        if (modelType == "III"){
-            targetSize = Size(480, 480)
-        }
-        if (modelType == "RT"){
-            targetSize = Size(224, 224)
-        }
-
-        analyzer = PoseEstimator(
-            requireContext(),
-            modelType, this, pointSize)
-        analyzer.updateThreshold(confidenceThreshold)
-
         if (allPermissionsGranted()) {
             startCamera()
         }
@@ -257,13 +279,23 @@ class ChallengeModeFragment : Fragment(), PoseEstimatorUser, TextToSpeech.OnInit
     override fun onPause() {
         super.onPause()
 
-        orientationListener.disable()
         cameraExecutor.shutdown()
         cameraExecutor.awaitTermination(3000, TimeUnit.MILLISECONDS)
+        orientationListener.disable()
+
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+
         analyzer.releaseResources()
-        if (tts != null) {
-            tts!!.stop()
-            tts!!.shutdown()
+        try
+        {
+            tts.stop()
+            tts.shutdown()
+        }catch (e:Exception)
+        {
+            Log.d("TTS", e.message.toString())
         }
     }
 
@@ -278,6 +310,17 @@ class ChallengeModeFragment : Fragment(), PoseEstimatorUser, TextToSpeech.OnInit
         }
         outState.putString(KEY_TARGET_POSE, targetPose)
         outState.putParcelableArrayList(KEY_LIST_OF_POSES, listOfPoses as ArrayList<out Parcelable>)
+    }
+
+    private fun loadSettings(){
+        preferences = PreferenceManager.getDefaultSharedPreferences(context)
+        confidenceThreshold = preferences.getInt("confidenceThreshold", 20)
+        filteringTimeThreshold = preferences.getInt("timeThreshold", 1)
+        modelType = preferences.getString("modelType", "RT").toString()
+        showFPS = preferences.getBoolean("showFPS", true)
+        holdTimeThreshold = preferences.getInt("holdPoseThreshold", 1)
+        enableVoiceMessages = preferences.getBoolean("enableVoiceMessages", false)
+        pointSize = preferences.getInt("pointSize", 5)
     }
 
     override fun update(bitmap: Bitmap, pose: String, confidence: Float, timestamp: Long){
@@ -434,7 +477,7 @@ class ChallengeModeFragment : Fragment(), PoseEstimatorUser, TextToSpeech.OnInit
         listOfPoses.clear()
         if (enableVoiceMessages)
         {
-            tts!!.speak(targetPose, TextToSpeech.QUEUE_FLUSH, null, "")
+            tts.speak(targetPose, TextToSpeech.QUEUE_FLUSH, null, "")
         }
     }
 

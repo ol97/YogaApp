@@ -57,7 +57,6 @@ class RecorderFragment : Fragment(), PoseEstimatorUser {
     private var confidenceThreshold:Int = 20
     private var timeThreshold:Int = 1
     private lateinit var modelType: String
-    private val TAG = "CameraXBasic"
     private val REQUEST_CODE_PERMISSIONS = 10
     private val REQUIRED_PERMISSIONS = arrayOf(Manifest.permission.CAMERA)
     private val KEY_RECORDING = "recording_flag"
@@ -67,15 +66,33 @@ class RecorderFragment : Fragment(), PoseEstimatorUser {
     private var pointSize: Int = 5
 
 
-    override fun onCreateView(
-            inflater: LayoutInflater, container: ViewGroup?,
-            savedInstanceState: Bundle?
-    ): View? {
-        return inflater.inflate(R.layout.fragment_recorder, container, false)
-    }
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
 
-    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         loadSettings()
+        val displayMetrics = DisplayMetrics()
+        activity?.windowManager?.defaultDisplay?.getMetrics(displayMetrics)
+        displayHeight = displayMetrics.heightPixels
+        displayWidth = displayMetrics.widthPixels
+
+        if (modelType == "I"){
+            targetSize = Size(256, 256)
+        }
+        if (modelType == "II"){
+            targetSize = Size(368, 368)
+        }
+        if (modelType == "III"){
+            targetSize = Size(480, 480)
+        }
+        if (modelType == "RT"){
+            targetSize = Size(224, 224)
+        }
+
+        analyzer = PoseEstimator(
+                requireContext(),
+                modelType, this)
+        analyzer.updateThreshold(confidenceThreshold)
+        analyzer.setPointSize(pointSize)
 
         if (savedInstanceState != null) {
             recordingFlag = savedInstanceState.getBoolean(KEY_RECORDING)
@@ -89,7 +106,16 @@ class RecorderFragment : Fragment(), PoseEstimatorUser {
                 listOfPoses = savedInstanceState.getParcelableArrayList<TimestampedPose>(KEY_LIST_OF_POSES) as MutableList<TimestampedPose>
             }
         }
+    }
 
+    override fun onCreateView(
+            inflater: LayoutInflater, container: ViewGroup?,
+            savedInstanceState: Bundle?
+    ): View? {
+        return inflater.inflate(R.layout.fragment_recorder, container, false)
+    }
+
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         imageButtonSettings = view.findViewById(R.id.imageButtonSettings)
         imageButtonSettings.setOnClickListener {
             findNavController().navigate(R.id.action_recorderFragment_to_settingsFragment)
@@ -150,59 +176,45 @@ class RecorderFragment : Fragment(), PoseEstimatorUser {
 
             }
         }
-
-        val layoutTop = view.findViewById<LinearLayout>(R.id.layout_top)
-        layoutTop.bringToFront()
-        layoutTop.invalidate()
-        val layoutBottom = view.findViewById<LinearLayout>(R.id.layout_bottom)
-        layoutBottom.bringToFront()
-        layoutBottom.invalidate()
     }
-
-
-
-    private fun loadSettings(){
-        preferences = PreferenceManager.getDefaultSharedPreferences(context)
-        confidenceThreshold = preferences.getInt("confidenceThreshold", 20)
-        timeThreshold = preferences.getInt("timeThreshold", 1)
-        modelType = preferences.getString("modelType", "RT").toString()
-        showFPS = preferences.getBoolean("showFPS", true)
-        pointSize = preferences.getInt("pointSize", 5)
-
-    }
-
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-
-        val displayMetrics = DisplayMetrics()
-        activity?.windowManager?.defaultDisplay?.getMetrics(displayMetrics)
-        displayHeight = displayMetrics.heightPixels
-        displayWidth = displayMetrics.widthPixels
-    }
-
-
 
     override fun onResume() {
         super.onResume()
+
+        val oldModelType = modelType
+        val oldShowFPS = showFPS
+        loadSettings()
+        analyzer.setPointSize(pointSize)
+
+        if (oldModelType != modelType)
+        {
+            if (modelType == "I"){
+                targetSize = Size(256, 256)
+            }
+            if (modelType == "II"){
+                targetSize = Size(368, 368)
+            }
+            if (modelType == "III"){
+                targetSize = Size(480, 480)
+            }
+            if (modelType == "RT"){
+                targetSize = Size(224, 224)
+            }
+
+            analyzer = PoseEstimator(
+                    requireContext(),
+                    modelType, this)
+            analyzer.updateThreshold(confidenceThreshold)
+            analyzer.setPointSize(pointSize)
+        }
+
+        if (oldShowFPS != showFPS)
+        {
+            if (showFPS){textViewFPS.visibility = View.VISIBLE}
+            else {textViewFPS.visibility = View.GONE}
+        }
+
         cameraExecutor = Executors.newSingleThreadExecutor()
-
-        if (modelType == "I"){
-            targetSize = Size(256, 256)
-        }
-        if (modelType == "II"){
-            targetSize = Size(368, 368)
-        }
-        if (modelType == "III"){
-            targetSize = Size(480, 480)
-        }
-        if (modelType == "RT"){
-            targetSize = Size(224, 224)
-        }
-
-        analyzer = PoseEstimator(
-                requireContext(),
-                modelType, this, pointSize)
-        analyzer.updateThreshold(confidenceThreshold)
 
         if (allPermissionsGranted()) {
             startCamera()
@@ -302,7 +314,6 @@ class RecorderFragment : Fragment(), PoseEstimatorUser {
             }
         }
         orientationListener.enable()
-
     }
 
     override fun onPause() {
@@ -311,6 +322,11 @@ class RecorderFragment : Fragment(), PoseEstimatorUser {
         orientationListener.disable()
         cameraExecutor.shutdown()
         cameraExecutor.awaitTermination(3000, TimeUnit.MILLISECONDS)
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+
         analyzer.releaseResources()
     }
 
@@ -328,6 +344,16 @@ class RecorderFragment : Fragment(), PoseEstimatorUser {
         {
             outState.putParcelableArrayList(KEY_LIST_OF_POSES, listOfPoses as ArrayList<out Parcelable>)
         }
+    }
+
+    private fun loadSettings(){
+        preferences = PreferenceManager.getDefaultSharedPreferences(context)
+        confidenceThreshold = preferences.getInt("confidenceThreshold", 20)
+        timeThreshold = preferences.getInt("timeThreshold", 1)
+        modelType = preferences.getString("modelType", "RT").toString()
+        showFPS = preferences.getBoolean("showFPS", true)
+        pointSize = preferences.getInt("pointSize", 5)
+
     }
 
      override fun update(bitmap: Bitmap, pose: String, confidence: Float, timestamp: Long){
@@ -358,7 +384,7 @@ class RecorderFragment : Fragment(), PoseEstimatorUser {
                 }
                 textureView.unlockCanvasAndPost(canvas)
             } catch (e: Exception){
-                Log.d("TextureView", e.message)
+                Log.d("TextureView", e.message.toString())
             }
             if (lensFacing == CameraSelector.DEFAULT_BACK_CAMERA) {
                 textureView.scaleX = 1F
@@ -416,7 +442,7 @@ class RecorderFragment : Fragment(), PoseEstimatorUser {
                         this, lensFacing, imageAnalyzer)
 
             } catch (exc: Exception) {
-                Log.e(TAG, "Use case binding failed", exc)
+                Log.e("CameraX", "Use case binding failed", exc)
             }
 
         }, ContextCompat.getMainExecutor(context))
