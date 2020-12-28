@@ -11,6 +11,8 @@ class AboutActivity : AppCompatActivity() {
         setContentView(R.layout.activity_about)
 
         val textViewModelDescription = findViewById<TextView>(R.id.textViewModelDescription)
+        val textViewLicenceAnnotation = findViewById<TextView>(R.id.textViewLicenseAnnotation)
         textViewModelDescription.movementMethod = LinkMovementMethod.getInstance()
+        textViewLicenceAnnotation.movementMethod = LinkMovementMethod.getInstance()
     }
 }

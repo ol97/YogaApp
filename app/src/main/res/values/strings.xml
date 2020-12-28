@@ -13,6 +13,8 @@
     <string name="dateTextView">Date: %1$s</string>
     <string name="timeTextView">Time: %1$s</string>
     <string name="durationTextView">Duration: %1$s</string>
+    <string name="scoreTextView">Score: %1$d / %2$d</string>
+    <string name="scoreTextViewEmpty">Score:</string>
     <string name="permissionNotGranted">Permissions not granted by the user.</string>
     <string name="setName">Set name</string>
     <string name="insertName">Name:</string>
@@ -48,7 +50,7 @@
     <string name="stopRecording">Stop recording</string>
     <string name="poseEstimationModel">Pose estimation model</string>
     <string name="thresholds">Thresholds</string>
-    <string name="poseEstimationConfidenceThreshold">Pose estimation confidence threshold</string>
+    <string name="poseEstimationConfidenceThreshold">Key point confidence threshold</string>
     <string name="filteringTimeThreshold">Filtering time threshold (seconds)</string>
     <string name="holdPoseThreshold">Pose hold time threshold (seconds)</string>
     <string name="showTimePerFrame">Show time per frame</string>
@@ -61,11 +63,14 @@
     <string name="start">Start</string>
     <string name="stop">Stop</string>
     <string name="whatIsYogaApp">What is YogaApp?</string>
-    <string name="aboutYogaApp">YogaApp is an Android application aimed at beginners. The goal of development was making training more engaging and fun.</string>
+    <string name="aboutYogaApp">YogaApp is an app aimed at beginners. The goal of this app is to make training yoga more engaging and fun.</string>
     <string name="supportedPoses">Supported poses</string>
     <string name="aboutSupportedPoses">The classifier used in YogaApp can recognize ten popular yoga poses (list below).
         For different poses, either a side view or a front view is required.
         In the case of poses requiring side view, it does not matter whether you are facing left or right.</string>
+    <string name="licenseAnnotation">Above images are licensed under different creative commons licenses.
+        <a href="http://www.yogaartandscience.com/poses/poses.html">Source 1</a>, <a href="https://www.flickr.com/people/yogamama-co-uk/">Source 2</a>,
+        <a href="https://en.wikipedia.org/wiki/M%C4%81l%C4%81sana#/media/File:Upave%C5%9B%C4%81sana.jpg">Source 3</a></string>
     <string name="modes">Modes of operation</string>
     <string name="modesDescription">In the challenge mode, your goal is to perform the pose indicated by
         the application and holding it for a set amount of time. If the pose is too difficult,
@@ -74,9 +79,9 @@
         of poses and the time you held them for in the history tab.</string>
     <string name="poseEstimationModelDescription">YogaApp uses EfficientPose
         (<a href="https://arxiv.org/abs/2004.12186">paper</a>, <a href="https://github.com/daniegr/EfficientPose">Github</a>)
-        models (RT, I, II, III) and a custom classifier to recognize yoga poses.
+        models and a custom classifier to recognize yoga poses. EfficientPose RT is the fastest model and EfficientPose III is the most accurate.
         <a href="https://sites.google.com/view/yoga-82/home">Yoga82</a>
         and <a href="https://www.amarchenkova.com/2018/12/04/data-set-convolutional-neural-network-yoga-pose/">Anastasia Marchenkova\'s</a>
-        datasets were used while training the classifier.</string>
+        datasets were used during the training of the classifier.</string>
     <string name="developedBy">Developed by: Łukasz Olejnik</string>
 </resources>

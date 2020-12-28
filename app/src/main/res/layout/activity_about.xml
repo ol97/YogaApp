@@ -164,6 +164,15 @@
                 app:srcCompat="@drawable/garland" />
 
             <TextView
+                android:id="@+id/textViewLicenseAnnotation"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:paddingLeft="8dp"
+                android:paddingRight="8dp"
+                android:textStyle="italic"
+                android:text="@string/licenseAnnotation" />
+
+            <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:textStyle="bold"

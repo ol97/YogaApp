@@ -30,7 +30,6 @@ import java.util.*
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
-import kotlin.math.round
 import kotlin.random.Random.Default.nextInt
 
 
@@ -40,6 +39,7 @@ class ChallengeModeFragment : Fragment(), PoseEstimatorUser, TextToSpeech.OnInit
     private lateinit var textViewFPS: TextView
     private lateinit var textViewPoseConfidence: TextView
     private lateinit var textViewPose: TextView
+    private lateinit var textViewScore: TextView
     private lateinit var imageButtonSettings: ImageButton
     private lateinit var orientationListener: OrientationEventListener
     private lateinit var analyzer:PoseEstimator
@@ -65,9 +65,13 @@ class ChallengeModeFragment : Fragment(), PoseEstimatorUser, TextToSpeech.OnInit
     private lateinit var textViewTargetPose: TextView
     private val KEY_TARGET_POSE = "target_pose"
     private val KEY_LIST_OF_POSES = "list_of_poses"
+    private val KEY_CORRECT_POSES = "correct_poses"
+    private val KEY_TOTAL_POSES = "total_poses"
     private var enableVoiceMessages: Boolean = false
     private lateinit var tts: TextToSpeech
     private var pointSize: Int = 5
+    private var correctPoses = 0
+    private var totalPoses = 0
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -80,6 +84,7 @@ class ChallengeModeFragment : Fragment(), PoseEstimatorUser, TextToSpeech.OnInit
         displayHeight = displayMetrics.heightPixels
         displayWidth = displayMetrics.widthPixels
         targetPose = randomPose()
+        totalPoses += 1
 
         if (modelType == "I"){
             targetSize = Size(256, 256)
@@ -109,6 +114,8 @@ class ChallengeModeFragment : Fragment(), PoseEstimatorUser, TextToSpeech.OnInit
             } else {
                 lensFacing = CameraSelector.DEFAULT_BACK_CAMERA
             }
+            totalPoses = savedInstanceState.getInt(KEY_TOTAL_POSES)
+            correctPoses = savedInstanceState.getInt(KEY_CORRECT_POSES)
         }
     }
 
@@ -132,6 +139,7 @@ class ChallengeModeFragment : Fragment(), PoseEstimatorUser, TextToSpeech.OnInit
         imageButtonSwitchCamera = view.findViewById(R.id.imageButtonSwitchCamera)
         textViewPose = view.findViewById(R.id.textViewPose)
         textViewTargetPose = view.findViewById(R.id.textViewTargetPose)
+        textViewScore = view.findViewById(R.id.textViewScore)
         buttonNext = view.findViewById(R.id.buttonNext)
         buttonNext.setOnClickListener {
             changePose()
@@ -310,6 +318,8 @@ class ChallengeModeFragment : Fragment(), PoseEstimatorUser, TextToSpeech.OnInit
         }
         outState.putString(KEY_TARGET_POSE, targetPose)
         outState.putParcelableArrayList(KEY_LIST_OF_POSES, listOfPoses as ArrayList<out Parcelable>)
+        outState.putInt(KEY_CORRECT_POSES, correctPoses)
+        outState.putInt(KEY_TOTAL_POSES, totalPoses)
     }
 
     private fun loadSettings(){
@@ -330,6 +340,7 @@ class ChallengeModeFragment : Fragment(), PoseEstimatorUser, TextToSpeech.OnInit
             CoroutineScope(Main).launch {
                 greenSignal()
             }
+            correctPoses += 1
             changePose()
         }
         updateUI(bitmap, pose, confidence, timestamp)
@@ -354,7 +365,7 @@ class ChallengeModeFragment : Fragment(), PoseEstimatorUser, TextToSpeech.OnInit
                 }
                 textureView.unlockCanvasAndPost(canvas)
             } catch (e: Exception){
-                Log.d("TextureView", e.message)
+                Log.d("TextureView", e.message.toString())
             }
             if (lensFacing == CameraSelector.DEFAULT_BACK_CAMERA) {
                 textureView.scaleX = 1F
@@ -367,6 +378,7 @@ class ChallengeModeFragment : Fragment(), PoseEstimatorUser, TextToSpeech.OnInit
             textViewPose.text = activity?.getString(R.string.poseTextView, pose)
             textViewTargetPose.text = activity?.getString(R.string.targetPoseTextView, targetPose)
             lastUpdated = timestamp
+            textViewScore.text = activity?.getString(R.string.scoreTextView, correctPoses, totalPoses)
         }
     }
 
@@ -441,20 +453,20 @@ class ChallengeModeFragment : Fragment(), PoseEstimatorUser, TextToSpeech.OnInit
 
     private fun checkPose(): Boolean
     {
-        var requirementMet: Boolean = true
+        var poseCorrect = true
         val reversedList: MutableList<TimestampedPose> = mutableListOf()
         reversedList.addAll(listOfPoses.asReversed())
         if (reversedList[0].timestamp - reversedList.lastOrNull()!!.timestamp < holdTimeThreshold)
         {
-            requirementMet = false
-            return requirementMet
+            poseCorrect = false
+            return poseCorrect
         }
         for (pose in reversedList)
         {
             if (reversedList[0].timestamp - pose.timestamp < holdTimeThreshold * 1000 &&
                     pose.poseName != targetPose)
             {
-                requirementMet = false
+                poseCorrect = false
             }
 
             if (reversedList[0].timestamp - pose.timestamp >= holdTimeThreshold * 1000)
@@ -462,7 +474,7 @@ class ChallengeModeFragment : Fragment(), PoseEstimatorUser, TextToSpeech.OnInit
                 listOfPoses.remove(pose)
             }
         }
-        return requirementMet
+        return poseCorrect
     }
 
     private fun changePose()
@@ -479,6 +491,7 @@ class ChallengeModeFragment : Fragment(), PoseEstimatorUser, TextToSpeech.OnInit
         {
             tts.speak(targetPose, TextToSpeech.QUEUE_FLUSH, null, "")
         }
+        totalPoses += 1
     }
 
     private suspend fun greenSignal()
@@ -501,7 +514,7 @@ class ChallengeModeFragment : Fragment(), PoseEstimatorUser, TextToSpeech.OnInit
                 toast.show()
             }
         } else {
-            Log.e("TTS", "Initilization Failed!")
+            Log.e("TTS", "Initialization Failed!")
         }
     }
 }
