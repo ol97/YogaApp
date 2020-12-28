@@ -58,6 +58,8 @@
     <string name="ttsInitFailed">Text to speech initialization failed!</string>
     <string name="pointSize">Point size</string>
     <string name="about">About</string>
+    <string name="start">Start</string>
+    <string name="stop">Stop</string>
     <string name="whatIsYogaApp">What is YogaApp?</string>
     <string name="aboutYogaApp">YogaApp is an Android application aimed at beginners. The goal of development was making training more engaging and fun.</string>
     <string name="supportedPoses">Supported poses</string>
@@ -66,8 +68,8 @@
         In the case of poses requiring side view, it does not matter whether you are facing left or right.</string>
     <string name="modes">Modes of operation</string>
     <string name="modesDescription">In the challenge mode, your goal is to perform the pose indicated by
-        the application and holding it for a set amount of time. If a pose is too difficult,
-        you can use the "SKIP" button to move to the next pose.
+        the application and holding it for a set amount of time. If the pose is too difficult,
+        you can use the "NEXT" button to skip it.
         Recording mode can be used to save the course of your yoga training. You can view a list
         of poses and the time you held them for in the history tab.</string>
     <string name="poseEstimationModelDescription">YogaApp uses EfficientPose
@@ -75,6 +77,6 @@
         models (RT, I, II, III) and a custom classifier to recognize yoga poses.
         <a href="https://sites.google.com/view/yoga-82/home">Yoga82</a>
         and <a href="https://www.amarchenkova.com/2018/12/04/data-set-convolutional-neural-network-yoga-pose/">Anastasia Marchenkova\'s</a>
-        datasets were used during the training of the classifier.</string>
+        datasets were used while training the classifier.</string>
     <string name="developedBy">Developed by: Łukasz Olejnik</string>
 </resources>

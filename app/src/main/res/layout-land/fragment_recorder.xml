@@ -71,8 +71,8 @@
             android:layout_weight="1"
             android:padding="16dp"
             android:backgroundTint="@color/white"
-            android:textOff="@string/startRecording"
-            android:textOn="@string/stopRecording" />
+            android:textOff="@string/start"
+            android:textOn="@string/stop" />
 
 
         <ImageButton

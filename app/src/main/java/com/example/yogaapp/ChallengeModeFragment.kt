@@ -96,13 +96,6 @@ class ChallengeModeFragment : Fragment(), PoseEstimatorUser, TextToSpeech.OnInit
         buttonNext.setOnClickListener {
             changePose()
         }
-
-        val layoutTop = view.findViewById<LinearLayout>(R.id.layout_top)
-        layoutTop.bringToFront()
-        layoutTop.invalidate()
-        val layoutBottom = view.findViewById<LinearLayout>(R.id.layout_bottom)
-        layoutBottom.bringToFront()
-        layoutBottom.invalidate()
     }
 
     private fun loadSettings(){
@@ -451,7 +444,7 @@ class ChallengeModeFragment : Fragment(), PoseEstimatorUser, TextToSpeech.OnInit
         {
             textViewTargetPose.setBackgroundColor(Color.GREEN)
             delay(500)
-            textViewTargetPose.setBackgroundColor(Color.BLACK)
+            textViewTargetPose.setBackgroundColor(Color.TRANSPARENT)
         }
     }
 
