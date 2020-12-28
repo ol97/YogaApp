@@ -94,6 +94,54 @@ class RecorderFragment : Fragment(), PoseEstimatorUser {
         analyzer.updateThreshold(confidenceThreshold)
         analyzer.setPointSize(pointSize)
 
+        cameraExecutor = Executors.newSingleThreadExecutor()
+
+        orientationListener = object : OrientationEventListener(context,
+                SensorManager.SENSOR_DELAY_NORMAL) {
+            override fun onOrientationChanged(orientation: Int) {
+                if(lensFacing == CameraSelector.DEFAULT_BACK_CAMERA){
+                    rotation = orientation
+                    when (orientation) {
+                        in 46..135 -> {
+                            analyzer.updateRotation(180)
+                        }
+                        in 136..225 -> {
+                            analyzer.updateRotation(270)
+                        }
+                        in 226..315 -> {
+                            analyzer.updateRotation(0)
+                        }
+                        in 316..359 -> {
+                            analyzer.updateRotation(90)
+                        }
+                        in 0..45 -> {
+                            analyzer.updateRotation(90)
+                        }
+                    }
+                }
+                else{
+                    when (orientation) {
+                        in 46..135 -> {
+                            analyzer.updateRotation(180)
+                        }
+                        in 136..225 -> {
+                            analyzer.updateRotation(90)
+                        }
+                        in 226..315 -> {
+                            analyzer.updateRotation(0)
+                        }
+                        in 316..359 -> {
+                            analyzer.updateRotation(270)
+                        }
+                        in 0..45 -> {
+                            analyzer.updateRotation(270)
+                        }
+                    }
+                }
+
+            }
+        }
+
         if (savedInstanceState != null) {
             recordingFlag = savedInstanceState.getBoolean(KEY_RECORDING)
             if (savedInstanceState.getBoolean(LENS_FACING_KEY)) {
@@ -105,6 +153,14 @@ class RecorderFragment : Fragment(), PoseEstimatorUser {
             {
                 listOfPoses = savedInstanceState.getParcelableArrayList<TimestampedPose>(KEY_LIST_OF_POSES) as MutableList<TimestampedPose>
             }
+        }
+        if (allPermissionsGranted()) {
+            startCamera()
+        }
+        else{
+            requestPermissions(
+                    REQUIRED_PERMISSIONS, REQUEST_CODE_PERMISSIONS
+            )
         }
     }
 
@@ -126,11 +182,52 @@ class RecorderFragment : Fragment(), PoseEstimatorUser {
         textureView = view.findViewById(R.id.textureView)
         textViewPoseConfidence = view.findViewById(R.id.textViewPoseConfidence)
         imageButtonSwitchCamera = view.findViewById(R.id.imageButtonSwitchCamera)
+        imageButtonSwitchCamera.setOnClickListener {
+            if (lensFacing ==  CameraSelector.DEFAULT_BACK_CAMERA) {
+                lensFacing = CameraSelector.DEFAULT_FRONT_CAMERA
+                when (rotation) {
+                    in 46..135 -> {
+                        analyzer.updateRotation(180)
+                    }
+                    in 136..225 -> {
+                        analyzer.updateRotation(90)
+                    }
+                    in 226..315 -> {
+                        analyzer.updateRotation(0)
+                    }
+                    in 316..359 -> {
+                        analyzer.updateRotation(270)
+                    }
+                    in 0..45 -> {
+                        analyzer.updateRotation(270)
+                    }
+                }
+            } else {
+                lensFacing = CameraSelector.DEFAULT_BACK_CAMERA
+                when (rotation) {
+                    in 46..135 -> {
+                        analyzer.updateRotation(180)
+                    }
+                    in 136..225 -> {
+                        analyzer.updateRotation(270)
+                    }
+                    in 226..315 -> {
+                        analyzer.updateRotation(0)
+                    }
+                    in 316..359 -> {
+                        analyzer.updateRotation(90)
+                    }
+                    in 0..45 -> {
+                        analyzer.updateRotation(90)
+                    }
+                }
+            }
+            startCamera()
+        }
         textViewPose = view.findViewById(R.id.textViewPose)
         toggleButtonRecord = view.findViewById(R.id.toggleButtonRecord)
         toggleButtonRecord.isChecked = recordingFlag
         toggleButtonRecord.setOnCheckedChangeListener { buttonView, isChecked ->
-
             recordingFlag = isChecked
             if (isChecked)
             {
@@ -181,6 +278,7 @@ class RecorderFragment : Fragment(), PoseEstimatorUser {
     override fun onResume() {
         super.onResume()
 
+        orientationListener.enable()
         val oldModelType = modelType
         val oldShowFPS = showFPS
         loadSettings()
@@ -213,120 +311,20 @@ class RecorderFragment : Fragment(), PoseEstimatorUser {
             if (showFPS){textViewFPS.visibility = View.VISIBLE}
             else {textViewFPS.visibility = View.GONE}
         }
-
-        cameraExecutor = Executors.newSingleThreadExecutor()
-
-        if (allPermissionsGranted()) {
-            startCamera()
-        }
-        else{
-            requestPermissions(
-                    REQUIRED_PERMISSIONS, REQUEST_CODE_PERMISSIONS
-            )
-        }
         lastUpdated = SystemClock.uptimeMillis()
-        imageButtonSwitchCamera.setOnClickListener {
-            if (lensFacing ==  CameraSelector.DEFAULT_BACK_CAMERA) {
-                lensFacing = CameraSelector.DEFAULT_FRONT_CAMERA
-                when (rotation) {
-                    in 46..135 -> {
-                        analyzer.updateRotation(180)
-                    }
-                    in 136..225 -> {
-                        analyzer.updateRotation(90)
-                    }
-                    in 226..315 -> {
-                        analyzer.updateRotation(0)
-                    }
-                    in 316..359 -> {
-                        analyzer.updateRotation(270)
-                    }
-                    in 0..45 -> {
-                        analyzer.updateRotation(270)
-                    }
-                }
-            } else {
-                lensFacing = CameraSelector.DEFAULT_BACK_CAMERA
-                when (rotation) {
-                    in 46..135 -> {
-                        analyzer.updateRotation(180)
-                    }
-                    in 136..225 -> {
-                        analyzer.updateRotation(270)
-                    }
-                    in 226..315 -> {
-                        analyzer.updateRotation(0)
-                    }
-                    in 316..359 -> {
-                        analyzer.updateRotation(90)
-                    }
-                    in 0..45 -> {
-                        analyzer.updateRotation(90)
-                    }
-                }
-            }
-            startCamera()
-        }
-
-        orientationListener = object : OrientationEventListener(context,
-                SensorManager.SENSOR_DELAY_NORMAL) {
-            override fun onOrientationChanged(orientation: Int) {
-                if(lensFacing == CameraSelector.DEFAULT_BACK_CAMERA){
-                    rotation = orientation
-                    when (orientation) {
-                        in 46..135 -> {
-                            analyzer.updateRotation(180)
-                        }
-                        in 136..225 -> {
-                            analyzer.updateRotation(270)
-                        }
-                        in 226..315 -> {
-                            analyzer.updateRotation(0)
-                        }
-                        in 316..359 -> {
-                            analyzer.updateRotation(90)
-                        }
-                        in 0..45 -> {
-                            analyzer.updateRotation(90)
-                        }
-                    }
-                }
-                else{
-                    when (orientation) {
-                        in 46..135 -> {
-                            analyzer.updateRotation(180)
-                        }
-                        in 136..225 -> {
-                            analyzer.updateRotation(90)
-                        }
-                        in 226..315 -> {
-                            analyzer.updateRotation(0)
-                        }
-                        in 316..359 -> {
-                            analyzer.updateRotation(270)
-                        }
-                        in 0..45 -> {
-                            analyzer.updateRotation(270)
-                        }
-                    }
-                }
-
-            }
-        }
-        orientationListener.enable()
     }
 
     override fun onPause() {
         super.onPause()
 
         orientationListener.disable()
-        cameraExecutor.shutdown()
-        cameraExecutor.awaitTermination(3000, TimeUnit.MILLISECONDS)
     }
 
     override fun onDestroy() {
         super.onDestroy()
 
+        cameraExecutor.shutdown()
+        cameraExecutor.awaitTermination(3000, TimeUnit.MILLISECONDS)
         analyzer.releaseResources()
     }
 

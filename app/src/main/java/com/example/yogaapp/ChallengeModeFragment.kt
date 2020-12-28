@@ -105,138 +105,10 @@ class ChallengeModeFragment : Fragment(), PoseEstimatorUser, TextToSpeech.OnInit
         analyzer.updateThreshold(confidenceThreshold)
         analyzer.setPointSize(pointSize)
 
-        if (savedInstanceState != null)
-        {
-            targetPose = savedInstanceState.getString(KEY_TARGET_POSE).toString()
-            listOfPoses = savedInstanceState.getParcelableArrayList<TimestampedPose>(KEY_LIST_OF_POSES) as MutableList<TimestampedPose>
-            if (savedInstanceState.getBoolean(LENS_FACING_KEY)) {
-                lensFacing = CameraSelector.DEFAULT_FRONT_CAMERA
-            } else {
-                lensFacing = CameraSelector.DEFAULT_BACK_CAMERA
-            }
-            totalPoses = savedInstanceState.getInt(KEY_TOTAL_POSES)
-            correctPoses = savedInstanceState.getInt(KEY_CORRECT_POSES)
-        }
-    }
-
-    override fun onCreateView(
-        inflater: LayoutInflater, container: ViewGroup?,
-        savedInstanceState: Bundle?
-    ): View? {
-        return inflater.inflate(R.layout.fragment_challenge_mode, container, false)
-    }
-
-    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        imageButtonSettings = view.findViewById(R.id.imageButtonSettings)
-        imageButtonSettings.setOnClickListener {
-            findNavController().navigate(R.id.action_challengeModeFragment_to_settingsFragment)
-        }
-        textViewFPS = view.findViewById(R.id.textViewFPS)
-        if (showFPS){textViewFPS.visibility = View.VISIBLE}
-        else {textViewFPS.visibility = View.GONE}
-        textureView = view.findViewById(R.id.textureView)
-        textViewPoseConfidence = view.findViewById(R.id.textViewPoseConfidence)
-        imageButtonSwitchCamera = view.findViewById(R.id.imageButtonSwitchCamera)
-        textViewPose = view.findViewById(R.id.textViewPose)
-        textViewTargetPose = view.findViewById(R.id.textViewTargetPose)
-        textViewScore = view.findViewById(R.id.textViewScore)
-        buttonNext = view.findViewById(R.id.buttonNext)
-        buttonNext.setOnClickListener {
-            changePose()
-        }
-    }
-
-    override fun onResume() {
-        super.onResume()
-
-        val oldModelType = modelType
-        val oldShowFPS = showFPS
-        loadSettings()
-        analyzer.setPointSize(pointSize)
-
-        if (oldModelType != modelType)
-        {
-            if (modelType == "I"){
-                targetSize = Size(256, 256)
-            }
-            if (modelType == "II"){
-                targetSize = Size(368, 368)
-            }
-            if (modelType == "III"){
-                targetSize = Size(480, 480)
-            }
-            if (modelType == "RT"){
-                targetSize = Size(224, 224)
-            }
-
-            analyzer = PoseEstimator(
-                    requireContext(),
-                    modelType, this)
-            analyzer.updateThreshold(confidenceThreshold)
-            analyzer.setPointSize(pointSize)
-        }
-
-        if (oldShowFPS != showFPS)
-        {
-            if (showFPS){textViewFPS.visibility = View.VISIBLE}
-            else {textViewFPS.visibility = View.GONE}
-        }
-
         cameraExecutor = Executors.newSingleThreadExecutor()
-        if (allPermissionsGranted()) {
-            startCamera()
-        }
-        else{
-            requestPermissions(
-                REQUIRED_PERMISSIONS, REQUEST_CODE_PERMISSIONS
-            )
-        }
-        lastUpdated = SystemClock.uptimeMillis()
-        imageButtonSwitchCamera.setOnClickListener {
-            if (lensFacing ==  CameraSelector.DEFAULT_BACK_CAMERA) {
-                lensFacing = CameraSelector.DEFAULT_FRONT_CAMERA
-                when (rotation) {
-                    in 46..135 -> {
-                        analyzer.updateRotation(180)
-                    }
-                    in 136..225 -> {
-                        analyzer.updateRotation(90)
-                    }
-                    in 226..315 -> {
-                        analyzer.updateRotation(0)
-                    }
-                    in 316..359 -> {
-                        analyzer.updateRotation(270)
-                    }
-                    in 0..45 -> {
-                        analyzer.updateRotation(270)
-                    }
-                }
-            } else {
-                lensFacing = CameraSelector.DEFAULT_BACK_CAMERA
-                when (rotation) {
-                    in 46..135 -> {
-                        analyzer.updateRotation(180)
-                    }
-                    in 136..225 -> {
-                        analyzer.updateRotation(270)
-                    }
-                    in 226..315 -> {
-                        analyzer.updateRotation(0)
-                    }
-                    in 316..359 -> {
-                        analyzer.updateRotation(90)
-                    }
-                    in 0..45 -> {
-                        analyzer.updateRotation(90)
-                    }
-                }
-            }
-            startCamera()
-        }
 
         orientationListener = object : OrientationEventListener(context,
-            SensorManager.SENSOR_DELAY_NORMAL) {
+                SensorManager.SENSOR_DELAY_NORMAL) {
             override fun onOrientationChanged(orientation: Int) {
                 if(lensFacing == CameraSelector.DEFAULT_BACK_CAMERA){
                     rotation = orientation
@@ -280,22 +152,148 @@ class ChallengeModeFragment : Fragment(), PoseEstimatorUser, TextToSpeech.OnInit
 
             }
         }
-        orientationListener.enable()
 
+        if (savedInstanceState != null)
+        {
+            targetPose = savedInstanceState.getString(KEY_TARGET_POSE).toString()
+            listOfPoses = savedInstanceState.getParcelableArrayList<TimestampedPose>(KEY_LIST_OF_POSES) as MutableList<TimestampedPose>
+            if (savedInstanceState.getBoolean(LENS_FACING_KEY)) {
+                lensFacing = CameraSelector.DEFAULT_FRONT_CAMERA
+            } else {
+                lensFacing = CameraSelector.DEFAULT_BACK_CAMERA
+            }
+            totalPoses = savedInstanceState.getInt(KEY_TOTAL_POSES)
+            correctPoses = savedInstanceState.getInt(KEY_CORRECT_POSES)
+        }
+        if (allPermissionsGranted()) {
+            startCamera()
+        }
+        else{
+            requestPermissions(
+                    REQUIRED_PERMISSIONS, REQUEST_CODE_PERMISSIONS
+            )
+        }
+    }
+
+    override fun onCreateView(
+        inflater: LayoutInflater, container: ViewGroup?,
+        savedInstanceState: Bundle?
+    ): View? {
+        return inflater.inflate(R.layout.fragment_challenge_mode, container, false)
+    }
+
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        imageButtonSettings = view.findViewById(R.id.imageButtonSettings)
+        imageButtonSettings.setOnClickListener {
+            findNavController().navigate(R.id.action_challengeModeFragment_to_settingsFragment)
+        }
+        textViewFPS = view.findViewById(R.id.textViewFPS)
+        if (showFPS){textViewFPS.visibility = View.VISIBLE}
+        else {textViewFPS.visibility = View.GONE}
+        textureView = view.findViewById(R.id.textureView)
+        textViewPoseConfidence = view.findViewById(R.id.textViewPoseConfidence)
+        imageButtonSwitchCamera = view.findViewById(R.id.imageButtonSwitchCamera)
+        imageButtonSwitchCamera.setOnClickListener {
+            if (lensFacing ==  CameraSelector.DEFAULT_BACK_CAMERA) {
+                lensFacing = CameraSelector.DEFAULT_FRONT_CAMERA
+                when (rotation) {
+                    in 46..135 -> {
+                        analyzer.updateRotation(180)
+                    }
+                    in 136..225 -> {
+                        analyzer.updateRotation(90)
+                    }
+                    in 226..315 -> {
+                        analyzer.updateRotation(0)
+                    }
+                    in 316..359 -> {
+                        analyzer.updateRotation(270)
+                    }
+                    in 0..45 -> {
+                        analyzer.updateRotation(270)
+                    }
+                }
+            } else {
+                lensFacing = CameraSelector.DEFAULT_BACK_CAMERA
+                when (rotation) {
+                    in 46..135 -> {
+                        analyzer.updateRotation(180)
+                    }
+                    in 136..225 -> {
+                        analyzer.updateRotation(270)
+                    }
+                    in 226..315 -> {
+                        analyzer.updateRotation(0)
+                    }
+                    in 316..359 -> {
+                        analyzer.updateRotation(90)
+                    }
+                    in 0..45 -> {
+                        analyzer.updateRotation(90)
+                    }
+                }
+            }
+            startCamera()
+        }
+        textViewPose = view.findViewById(R.id.textViewPose)
+        textViewTargetPose = view.findViewById(R.id.textViewTargetPose)
+        textViewScore = view.findViewById(R.id.textViewScore)
+        buttonNext = view.findViewById(R.id.buttonNext)
+        buttonNext.setOnClickListener {
+            changePose()
+        }
+    }
+
+    override fun onResume() {
+        super.onResume()
+
+        orientationListener.enable()
+        val oldModelType = modelType
+        val oldShowFPS = showFPS
+        loadSettings()
+        analyzer.setPointSize(pointSize)
+
+        if (oldModelType != modelType)
+        {
+            if (modelType == "I"){
+                targetSize = Size(256, 256)
+            }
+            if (modelType == "II"){
+                targetSize = Size(368, 368)
+            }
+            if (modelType == "III"){
+                targetSize = Size(480, 480)
+            }
+            if (modelType == "RT"){
+                targetSize = Size(224, 224)
+            }
+
+            analyzer = PoseEstimator(
+                    requireContext(),
+                    modelType, this)
+            analyzer.updateThreshold(confidenceThreshold)
+            analyzer.setPointSize(pointSize)
+        }
+
+        if (oldShowFPS != showFPS)
+        {
+            if (showFPS){textViewFPS.visibility = View.VISIBLE}
+            else {textViewFPS.visibility = View.GONE}
+        }
+        lastUpdated = SystemClock.uptimeMillis()
     }
 
     override fun onPause() {
         super.onPause()
 
-        cameraExecutor.shutdown()
-        cameraExecutor.awaitTermination(3000, TimeUnit.MILLISECONDS)
         orientationListener.disable()
-
     }
 
     override fun onDestroy() {
         super.onDestroy()
 
+        cameraExecutor.shutdown()
+        cameraExecutor.awaitTermination(3000, TimeUnit.MILLISECONDS)
         analyzer.releaseResources()
         try
         {
