@@ -281,6 +281,7 @@ class ChallengeModeFragment : Fragment(), PoseEstimatorUser, TextToSpeech.OnInit
             else {textViewFPS.visibility = View.GONE}
         }
         lastUpdated = SystemClock.uptimeMillis()
+        startCamera()
     }
 
     override fun onPause() {

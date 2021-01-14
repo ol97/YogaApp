@@ -44,13 +44,6 @@
             app:key="showFPS"
             app:defaultValue="true"
             app:title="@string/showTimePerFrame"/>
-    </PreferenceCategory>
-
-    <PreferenceCategory app:title="@string/other">
-        <SwitchPreferenceCompat
-            app:key="enableVoiceMessages"
-            app:defaultValue="false"
-            app:title="@string/enableVoiceMessages"/>
 
         <SeekBarPreference
             android:key="pointSize"
@@ -60,6 +53,14 @@
             app:min="1"
             app:showSeekBarValue="true"
             app:defaultValue="5" />
+    </PreferenceCategory>
+
+    <PreferenceCategory app:title="@string/other">
+        <SwitchPreferenceCompat
+            app:key="enableVoiceMessages"
+            app:defaultValue="false"
+            app:title="@string/enableVoiceMessages"/>
+
     </PreferenceCategory>
 
 </PreferenceScreen>

@@ -17,9 +17,9 @@ class ArchiveDbSchema {
         }
     }
 
-    class PosesInSessionTable {
+    class SessionDetailsTable {
         companion object{
-            const val TABLE_NAME = "poseinsession"
+            const val TABLE_NAME = "sessiondetails"
         }
 
         class Cols {

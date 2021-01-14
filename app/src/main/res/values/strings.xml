@@ -50,9 +50,9 @@
     <string name="stopRecording">Stop recording</string>
     <string name="poseEstimationModel">Pose estimation model</string>
     <string name="thresholds">Thresholds</string>
-    <string name="poseEstimationConfidenceThreshold">Key point confidence threshold</string>
+    <string name="poseEstimationConfidenceThreshold">Keypoint confidence threshold</string>
     <string name="filteringTimeThreshold">Filtering time threshold (seconds)</string>
-    <string name="holdPoseThreshold">Pose hold time threshold (seconds)</string>
+    <string name="holdPoseThreshold">Pose hold time (seconds)</string>
     <string name="showTimePerFrame">Show time per frame</string>
     <string name="uiElements">UI elements</string>
     <string name="other">Other</string>

@@ -312,6 +312,7 @@ class RecorderFragment : Fragment(), PoseEstimatorUser {
             else {textViewFPS.visibility = View.GONE}
         }
         lastUpdated = SystemClock.uptimeMillis()
+        startCamera()
     }
 
     override fun onPause() {

@@ -111,7 +111,6 @@ class PoseEstimator(context: Context, private val type:String,
     override fun analyze(image: ImageProxy) {
         analysisInProgress = true
         if (imageProcessor == null){
-
             val maxDimension = max(image.width, image.height)
             imageProcessor = ImageProcessor.Builder()
                 .add(ResizeWithCropOrPadOp(maxDimension,maxDimension))
@@ -119,7 +118,6 @@ class PoseEstimator(context: Context, private val type:String,
                 .add(NormalizeOp(0F,255F))
                 .add(NormalizeOp(floatArrayOf(0.485F, 0.456F, 0.406F), floatArrayOf(0.229F, 0.224F, 0.225F)))
                 .build()
-
         }
         var bitmap = Bitmap.createBitmap(image.width, image.height, Bitmap.Config.ARGB_8888)
         yuvToRgbConverter.yuvToRgb(image.image!!, bitmap)

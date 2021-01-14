@@ -31,12 +31,12 @@ class ArchiveHelper(context: Context) {
 
             for ((i, timestampedPose) in listOfPoses.withIndex()){
                 values.clear()
-                values.put(ArchiveDbSchema.PosesInSessionTable.Cols.POSE_NAME, timestampedPose.poseName)
-                values.put(ArchiveDbSchema.PosesInSessionTable.Cols.DURATION, timestampedPose.timestamp.toString())
-                values.put(ArchiveDbSchema.PosesInSessionTable.Cols.NUMBER_IN_SEQUENCE, i.toString())
-                values.put(ArchiveDbSchema.PosesInSessionTable.Cols.SESSION_ID, sessionId.toString())
+                values.put(ArchiveDbSchema.SessionDetailsTable.Cols.POSE_NAME, timestampedPose.poseName)
+                values.put(ArchiveDbSchema.SessionDetailsTable.Cols.DURATION, timestampedPose.timestamp.toString())
+                values.put(ArchiveDbSchema.SessionDetailsTable.Cols.NUMBER_IN_SEQUENCE, i.toString())
+                values.put(ArchiveDbSchema.SessionDetailsTable.Cols.SESSION_ID, sessionId.toString())
 
-                database.insertOrThrow(ArchiveDbSchema.PosesInSessionTable.TABLE_NAME, null, values)
+                database.insertOrThrow(ArchiveDbSchema.SessionDetailsTable.TABLE_NAME, null, values)
 
             }
         }
@@ -88,17 +88,17 @@ class ArchiveHelper(context: Context) {
         try {
 
             val cursor = database.query(false,
-                    ArchiveDbSchema.PosesInSessionTable.TABLE_NAME, null,
-                    ArchiveDbSchema.PosesInSessionTable.Cols.SESSION_ID + " = CAST(? AS INTEGER)",
+                    ArchiveDbSchema.SessionDetailsTable.TABLE_NAME, null,
+                    ArchiveDbSchema.SessionDetailsTable.Cols.SESSION_ID + " = CAST(? AS INTEGER)",
                     arrayOf(sessionId), null, null,
-                    "CAST(" + ArchiveDbSchema.PosesInSessionTable.Cols.NUMBER_IN_SEQUENCE + " AS INTEGER)" + " asc", null)
+                    "CAST(" + ArchiveDbSchema.SessionDetailsTable.Cols.NUMBER_IN_SEQUENCE + " AS INTEGER)" + " asc", null)
             if (cursor.moveToFirst())
             {
                 do
                 {
-                    val numberInSequence = cursor.getString(cursor.getColumnIndex(ArchiveDbSchema.PosesInSessionTable.Cols.NUMBER_IN_SEQUENCE))
-                    val poseDuration = cursor.getString(cursor.getColumnIndex(ArchiveDbSchema.PosesInSessionTable.Cols.DURATION))
-                    val poseName = cursor.getString(cursor.getColumnIndex(ArchiveDbSchema.PosesInSessionTable.Cols.POSE_NAME))
+                    val numberInSequence = cursor.getString(cursor.getColumnIndex(ArchiveDbSchema.SessionDetailsTable.Cols.NUMBER_IN_SEQUENCE))
+                    val poseDuration = cursor.getString(cursor.getColumnIndex(ArchiveDbSchema.SessionDetailsTable.Cols.DURATION))
+                    val poseName = cursor.getString(cursor.getColumnIndex(ArchiveDbSchema.SessionDetailsTable.Cols.POSE_NAME))
 
                     list.add(arrayOf(numberInSequence, poseName, poseDuration))
                 }
@@ -134,8 +134,8 @@ class ArchiveHelper(context: Context) {
     fun deleteSession(sessionKey: String): Boolean{
         var ok = true
         try{
-            database.delete(ArchiveDbSchema.PosesInSessionTable.TABLE_NAME,
-           ArchiveDbSchema.PosesInSessionTable.Cols.SESSION_ID + " = CAST(? AS INTEGER)", arrayOf(sessionKey))
+            database.delete(ArchiveDbSchema.SessionDetailsTable.TABLE_NAME,
+           ArchiveDbSchema.SessionDetailsTable.Cols.SESSION_ID + " = CAST(? AS INTEGER)", arrayOf(sessionKey))
             database.delete(ArchiveDbSchema.SessionTable.TABLE_NAME,
                     ArchiveDbSchema.SessionTable.Cols.ID + "= CAST(? AS INTEGER)",
                     arrayOf(sessionKey))
