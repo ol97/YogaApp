@@ -102,7 +102,7 @@ class SessionDetailsFragment : Fragment() {
 
     private fun updateUI(){
         val detailedData = context?.let {
-            ArchiveHelper.getInstance(it)?.readDetailedSessionData(args.sessionid) }
+            ArchiveHelper.getInstance(it)?.readSessionDetails(args.sessionid) }
 
         textViewPoses.text = ""
         for (i in detailedData!!.indices)
@@ -114,7 +114,7 @@ class SessionDetailsFragment : Fragment() {
             textViewPoses.text = newText
         }
 
-        val sessionData = context?.let { ArchiveHelper.getInstance(it)?.readSessionData(args.sessionid) }
+        val sessionData = context?.let { ArchiveHelper.getInstance(it)?.readBasicSessionData(args.sessionid) }
         if (sessionData!!.isNotEmpty())
         {
             textViewDate.text = getString(R.string.dateTextView, sessionData[2])

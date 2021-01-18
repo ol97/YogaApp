@@ -83,7 +83,7 @@ class ArchiveHelper(context: Context) {
     }
 
 
-    fun readDetailedSessionData(sessionId: String): List<Array<String>>{
+    fun readSessionDetails(sessionId: String): List<Array<String>>{
         val list = mutableListOf<Array<String>>()
         try {
 
@@ -149,7 +149,7 @@ class ArchiveHelper(context: Context) {
         return ok
     }
 
-    fun readSessionData(sessionId: String): Array<String> {
+    fun readBasicSessionData(sessionId: String): Array<String> {
         try
         {
             val cursor = database.query(false, ArchiveDbSchema.SessionTable.TABLE_NAME,

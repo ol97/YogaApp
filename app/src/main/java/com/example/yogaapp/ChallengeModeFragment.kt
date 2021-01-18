@@ -251,7 +251,6 @@ class ChallengeModeFragment : Fragment(), PoseEstimatorUser, TextToSpeech.OnInit
         val oldModelType = modelType
         val oldShowFPS = showFPS
         loadSettings()
-        analyzer.setPointSize(pointSize)
 
         if (oldModelType != modelType)
         {
@@ -271,9 +270,9 @@ class ChallengeModeFragment : Fragment(), PoseEstimatorUser, TextToSpeech.OnInit
             analyzer = PoseEstimator(
                     requireContext(),
                     modelType, this)
-            analyzer.updateThreshold(confidenceThreshold)
-            analyzer.setPointSize(pointSize)
         }
+        analyzer.setPointSize(pointSize)
+        analyzer.updateThreshold(confidenceThreshold)
 
         if (oldShowFPS != showFPS)
         {

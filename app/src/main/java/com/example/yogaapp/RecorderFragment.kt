@@ -282,7 +282,6 @@ class RecorderFragment : Fragment(), PoseEstimatorUser {
         val oldModelType = modelType
         val oldShowFPS = showFPS
         loadSettings()
-        analyzer.setPointSize(pointSize)
 
         if (oldModelType != modelType)
         {
@@ -302,9 +301,9 @@ class RecorderFragment : Fragment(), PoseEstimatorUser {
             analyzer = PoseEstimator(
                     requireContext(),
                     modelType, this)
-            analyzer.updateThreshold(confidenceThreshold)
-            analyzer.setPointSize(pointSize)
         }
+        analyzer.setPointSize(pointSize)
+        analyzer.updateThreshold(confidenceThreshold)
 
         if (oldShowFPS != showFPS)
         {
