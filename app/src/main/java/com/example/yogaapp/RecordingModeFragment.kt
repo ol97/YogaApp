@@ -11,46 +11,41 @@ import android.hardware.SensorManager
 import android.os.Bundle
 import android.os.Parcelable
 import android.os.SystemClock
-import android.speech.tts.TextToSpeech
 import android.util.DisplayMetrics
 import android.util.Log
 import android.util.Size
 import android.view.*
 import android.widget.*
-import androidx.fragment.app.Fragment
+import androidx.appcompat.app.AlertDialog
 import androidx.camera.core.CameraSelector
 import androidx.camera.core.ImageAnalysis
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.core.content.ContextCompat
+import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.findNavController
 import androidx.preference.PreferenceManager
-import kotlinx.coroutines.*
-import kotlinx.coroutines.Dispatchers.Main
+import com.example.yogaapp.database.ArchiveHelper
 import java.util.*
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
-import kotlin.random.Random.Default.nextInt
 
-// Fragment handling logic of "Challenge Mode"
+// Fragment handling logic of Recording Mode
 // PoseEstimatorUser is an interface used to pass data from PoseEstimator to whatever
-// is using it ("Recording Mode" or "Challenge Mode"). TextTosSpeech.OnInitListener to use TTS.
-
-class ChallengeModeFragment : Fragment(), PoseEstimatorUser, TextToSpeech.OnInitListener {
+// is using it ("Recording Mode" or "Challenge Mode").
+class RecordingModeFragment : Fragment(), PoseEstimatorUser {
 
     // camera executor, basically a thread used by cameraX so it doesn't block the UI thread.
     private lateinit var cameraExecutor: ExecutorService
 
-    // all widgets visible on the screen in "Challenge Mode"
+    // all widgets visible ob the screen in "Recording Mode"
     private lateinit var textureView: TextureView
     private lateinit var textViewFPS: TextView
     private lateinit var textViewPoseConfidence: TextView
     private lateinit var textViewPose: TextView
-    private lateinit var textViewScore: TextView
     private lateinit var imageButtonSettings: ImageButton
-    private lateinit var imageButtonSwitchCamera: ImageButton
-    private lateinit var buttonNext: Button
-    private lateinit var textViewTargetPose: TextView
+    private lateinit var toggleButtonRecord: ToggleButton
+    private lateinit var imageButtonSwitchCamera:ImageButton
 
     // orientation listener to check orientation of the device.
     // Resources.Configuration.orientation only tells whether it's portrait or landscape, but doesn't
@@ -83,7 +78,7 @@ class ChallengeModeFragment : Fragment(), PoseEstimatorUser, TextToSpeech.OnInit
 
     // variable necessary to retrieve settings from settings screen,
     // I'm using predefined Settings Fragment.
-    private lateinit var preferences: SharedPreferences
+    private lateinit var preferences:SharedPreferences
 
     // Time per frame visibility
     private var showFPS: Boolean = true
@@ -92,39 +87,27 @@ class ChallengeModeFragment : Fragment(), PoseEstimatorUser, TextToSpeech.OnInit
     // than the threshold then it's coordinates are set to [0,0] and it is not displayed.
     private var confidenceThreshold:Int = 20
 
-    // how long (in seconds) user has to hold the pose to get a point
-    private var holdTimeThreshold: Int = 1
+    // a minimal time for which a pose has to be held for to be written in database
+    // threshold for filtering list of poses before saving it to database
+    private var timeThreshold:Int = 1
 
     // Keys for asking for camera permissions, based on "Getting Started with CameraX"
     private val REQUEST_CODE_PERMISSIONS = 10
     private val REQUIRED_PERMISSIONS = arrayOf(Manifest.permission.CAMERA)
 
-    // keys to retrieve values from settings or savedInstanceState
-    private val KEY_TARGET_POSE = "target_pose"
-    private val KEY_LIST_OF_POSES = "list_of_poses"
-    private val KEY_CORRECT_POSES = "correct_poses"
-    private val KEY_TOTAL_POSES = "total_poses"
+    // keys for reading saved data from savedInstanceState
     private val LENS_FACING_KEY: String = "lens_facing"
+    private val KEY_RECORDING = "recording_flag"
+    private val KEY_LIST_OF_POSES = "list_of_poses"
 
-    // list where poses with timestamps are saved, used to determine if user held a pose for
-    // long enough
+    // flag indicating whether recording is active
+    private var recordingFlag: Boolean = false
+
+    // list which holds names of all poses with timestamps during recording
     private var listOfPoses: MutableList<TimestampedPose> = mutableListOf()
-
-    // the pose user has to do
-    private lateinit var targetPose: String
-
-    // enable/disable TTS
-    private var enableVoiceMessages: Boolean = false
-
-    // TextToSpeech instance
-    private lateinit var tts: TextToSpeech
 
     // multiplier for keypoint marker size
     private var pointSize: Int = 5
-
-    // score
-    private var correctPoses = 0
-    private var totalPoses = 0
 
 
     // load settings and initialize everything
@@ -133,18 +116,11 @@ class ChallengeModeFragment : Fragment(), PoseEstimatorUser, TextToSpeech.OnInit
 
         loadSettings()
 
-        // create TTS instance
-        tts = TextToSpeech(context, this)
-
-        // get display size
+        //get display size
         val displayMetrics = DisplayMetrics()
         activity?.windowManager?.defaultDisplay?.getMetrics(displayMetrics)
         displayHeight = displayMetrics.heightPixels
         displayWidth = displayMetrics.widthPixels
-
-        // select random pose as target
-        targetPose = randomPose()
-        totalPoses += 1
 
         // set target size based on model selected in settings
         if (modelType == "I"){
@@ -221,17 +197,17 @@ class ChallengeModeFragment : Fragment(), PoseEstimatorUser, TextToSpeech.OnInit
 
         // check if there is a savedInstanceState of this fragment (returning from settings, configuration changed etc.)
         // if yes then restore data.
-        if (savedInstanceState != null)
-        {
-            targetPose = savedInstanceState.getString(KEY_TARGET_POSE).toString()
-            listOfPoses = savedInstanceState.getParcelableArrayList<TimestampedPose>(KEY_LIST_OF_POSES) as MutableList<TimestampedPose>
+        if (savedInstanceState != null) {
+            recordingFlag = savedInstanceState.getBoolean(KEY_RECORDING)
             if (savedInstanceState.getBoolean(LENS_FACING_KEY)) {
                 lensFacing = CameraSelector.DEFAULT_FRONT_CAMERA
             } else {
                 lensFacing = CameraSelector.DEFAULT_BACK_CAMERA
             }
-            totalPoses = savedInstanceState.getInt(KEY_TOTAL_POSES)
-            correctPoses = savedInstanceState.getInt(KEY_CORRECT_POSES)
+            if (recordingFlag)
+            {
+                listOfPoses = savedInstanceState.getParcelableArrayList<TimestampedPose>(KEY_LIST_OF_POSES) as MutableList<TimestampedPose>
+            }
         }
 
         // if camera permissions are granted then start camera, if no then ask for them
@@ -247,23 +223,23 @@ class ChallengeModeFragment : Fragment(), PoseEstimatorUser, TextToSpeech.OnInit
 
     // inflate fragment layout
     override fun onCreateView(
-        inflater: LayoutInflater, container: ViewGroup?,
-        savedInstanceState: Bundle?
+            inflater: LayoutInflater, container: ViewGroup?,
+            savedInstanceState: Bundle?
     ): View? {
-        return inflater.inflate(R.layout.fragment_challenge_mode, container, false)
+        return inflater.inflate(R.layout.fragment_recorder, container, false)
     }
 
-    // when layout is inflated find all widgets, set onClickListeners (configure UI)
+    // when layout is inflated find all widgets, set onClickListeners etc. (configure UI)
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         imageButtonSettings = view.findViewById(R.id.imageButtonSettings)
 
         // navigate to settings after clicking "Settings" button
         imageButtonSettings.setOnClickListener {
-            findNavController().navigate(R.id.action_challengeModeFragment_to_settingsFragment)
+            findNavController().navigate(R.id.action_recorderFragment_to_settingsFragment)
         }
 
         // setting visibility of timePerFrame textView. Setting visibility to View.GONE
-        //  frees up the slot in LinearLayout
+        // frees up the slot in LinearLayout
         textViewFPS = view.findViewById(R.id.textViewFPS)
         if (showFPS){textViewFPS.visibility = View.VISIBLE}
         else {textViewFPS.visibility = View.GONE}
@@ -271,7 +247,7 @@ class ChallengeModeFragment : Fragment(), PoseEstimatorUser, TextToSpeech.OnInit
         textureView = view.findViewById(R.id.textureView)
         textViewPoseConfidence = view.findViewById(R.id.textViewPoseConfidence)
 
-        // after switching lenses update the rotation for the first frame manually and restart camera,
+        // after switching lenses update the rotation for the first frame manually and restart the camera,
         // orientationListener only updates after detecting change in orientation,
         // if device was stationary then the rotation passed to PoseEstimator wouldn't be updated.
         imageButtonSwitchCamera = view.findViewById(R.id.imageButtonSwitchCamera)
@@ -318,13 +294,69 @@ class ChallengeModeFragment : Fragment(), PoseEstimatorUser, TextToSpeech.OnInit
             startCamera()
         }
         textViewPose = view.findViewById(R.id.textViewPose)
-        textViewTargetPose = view.findViewById(R.id.textViewTargetPose)
-        textViewScore = view.findViewById(R.id.textViewScore)
-        buttonNext = view.findViewById(R.id.buttonNext)
 
-        // skip pose after clicking "Next" button
-        buttonNext.setOnClickListener {
-            changePose()
+        // set onClickListener for the toggle button that starts/stops the recording
+        // when the recording starts then clear the list
+        // if the recording is stops then show a dialog box in which user can name
+        // the training session being saved
+        toggleButtonRecord = view.findViewById(R.id.toggleButtonRecord)
+        toggleButtonRecord.isChecked = recordingFlag
+        toggleButtonRecord.setOnCheckedChangeListener { buttonView, isChecked ->
+            recordingFlag = isChecked
+            // if new recording is starting then clear the list
+            if (isChecked)
+            {
+                listOfPoses.clear()
+            }
+            // if a recording is stopped show dialog
+            // there is no point in saving a session if only one frame was saved, duration can't be calculated
+            if (!isChecked && listOfPoses.lastIndex >= 2)
+            {
+                // build and show dialog
+                val alert = context?.let { it1 -> AlertDialog.Builder(it1) }
+                alert?.setTitle(getString(R.string.setName))
+                alert?.setMessage(getString(R.string.insertName))
+                val input = EditText(context)
+                alert?.setView(input)
+                // load all currently taken names to later check if the name entered by user is valid
+                val names = context?.let { ArchiveHelper.getInstance(it) }!!.readSessionNames()
+                alert?.setPositiveButton(getString(R.string.save)) { dialog, whichButton -> }
+                alert?.setNegativeButton(getString(R.string.cancel)) { dialog, which -> }
+                val dialog = alert!!.create()
+                dialog.show()
+
+                // positive button - "Save"
+                // negative button - "Cancel" - closes the dialog
+                dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener{
+                    val name = input.text.toString()
+                    // check if name is already taken, if yes show Toast
+                    if (names.contains(name)) {
+                        val toast = Toast.makeText(context, getString(R.string.nameInUse), Toast.LENGTH_SHORT)
+                        toast.show()
+                    }
+                    // check if name is too long, if yes show Toast
+                    else if (name.length >= 20){
+                        val toast = Toast.makeText(context, getString(R.string.nameTooLong), Toast.LENGTH_SHORT)
+                        toast.show()
+                    }
+                    // if name is ok save session to database. display Toast with confirmation
+                    else {
+                        context?.let {
+                            val archiveHelper = ArchiveHelper.getInstance(it)
+                            val ok = archiveHelper?.insertSession(filterListOfPoses(listOfPoses), name)
+                            if (!ok!!) {
+                                val toast = Toast.makeText(context, getString(R.string.savingFailed), Toast.LENGTH_SHORT)
+                                toast.show()
+                            } else {
+                                val toast = Toast.makeText(context, getString(R.string.savingSucceeded), Toast.LENGTH_SHORT)
+                                toast.show()
+                                dialog.dismiss()
+                            }
+                        }
+                    }
+                }
+
+            }
         }
     }
 
@@ -378,24 +410,15 @@ class ChallengeModeFragment : Fragment(), PoseEstimatorUser, TextToSpeech.OnInit
         orientationListener.disable()
     }
 
+    // Shutdown thread handling camera, wait for its termination
+    // and release resources used by pose estimation model. Resources can be only released
+    // after the pose estimation model stops receiving and processing frames.
     override fun onDestroy() {
         super.onDestroy()
 
-        // Shutdown thread handling camera, wait for its termination
-        // and release resources used by pose estimation model. Resources can be only released
-        // after the pose estimation model stops receiving and processing frames.
-        // Shutdown TTS.
         cameraExecutor.shutdown()
         cameraExecutor.awaitTermination(3000, TimeUnit.MILLISECONDS)
         analyzer.releaseResources()
-        try
-        {
-            tts.stop()
-            tts.shutdown()
-        }catch (e:Exception)
-        {
-            Log.d("TTS", e.message.toString())
-        }
     }
 
     // Write to Bundle (save) all necessary parameters on rotation, when locking screen,
@@ -409,46 +432,35 @@ class ChallengeModeFragment : Fragment(), PoseEstimatorUser, TextToSpeech.OnInit
         else{
             outState.putBoolean(LENS_FACING_KEY, false)
         }
-        outState.putString(KEY_TARGET_POSE, targetPose)
-        outState.putParcelableArrayList(KEY_LIST_OF_POSES, listOfPoses as ArrayList<out Parcelable>)
-        outState.putInt(KEY_CORRECT_POSES, correctPoses)
-        outState.putInt(KEY_TOTAL_POSES, totalPoses)
+        outState.putBoolean(KEY_RECORDING, recordingFlag)
+        if (recordingFlag)
+        {
+            outState.putParcelableArrayList(KEY_LIST_OF_POSES, listOfPoses as ArrayList<out Parcelable>)
+        }
     }
 
     // load settings from preferences, preferences are basically all the settings in "Settings" screen
     private fun loadSettings(){
         preferences = PreferenceManager.getDefaultSharedPreferences(context)
         confidenceThreshold = preferences.getInt("confidenceThreshold", 20)
+        timeThreshold = preferences.getInt("timeThreshold", 1)
         modelType = preferences.getString("modelType", "RT").toString()
         showFPS = preferences.getBoolean("showFPS", true)
-        holdTimeThreshold = preferences.getInt("holdPoseThreshold", 1)
-        enableVoiceMessages = preferences.getBoolean("enableVoiceMessages", false)
         pointSize = preferences.getInt("pointSize", 5)
+
     }
 
     // method defined by PoseEstimatorUser interface. PoseEstimator returns bitmap, name of the pose,
     // confidence for that pose, and timestamp of when was the frame passed to fragment.
-    override fun update(bitmap: Bitmap, pose: String, confidence: Float, timestamp: Long){
-
-        // add pose name with timestamp to list so its possible to check for how long its being held
-        listOfPoses.add(TimestampedPose(pose, timestamp))
-
-        // check if pose is correct and is being held for long enough to award point. If yes then
-        // make background of target pose textView green for 0.5 second, change target pose, clear list of poses.
-        // In the end update UI.
-        if (checkPose())
-        {
-            CoroutineScope(Main).launch {
-                greenSignal()
-            }
-            correctPoses += 1
-            changePose()
-            listOfPoses.clear()
-        }
+    // if recording is active add pose name with timestamp to the list
+     override fun update(bitmap: Bitmap, pose: String, confidence: Float, timestamp: Long){
         updateUI(bitmap, pose, confidence, timestamp)
+        if (recordingFlag)
+        {
+            listOfPoses.add(TimestampedPose(pose, timestamp))
+        }
 
     }
-
 
     private fun updateUI(bitmap: Bitmap, pose: String, confidence: Float, timestamp: Long){
 
@@ -463,13 +475,13 @@ class ChallengeModeFragment : Fragment(), PoseEstimatorUser, TextToSpeech.OnInit
                 if (displayWidth < displayHeight){
                     val scale = canvas.width.toFloat()/bitmap.width.toFloat()
                     val dst = RectF(0F, (canvas.height - bitmap.height.toFloat() * scale) / 2, displayWidth.toFloat(),
-                        canvas.height - (canvas.height - bitmap.height.toFloat() * scale) / 2)
+                            canvas.height - (canvas.height - bitmap.height.toFloat() * scale) / 2)
                     canvas.drawBitmap(bitmap, null, dst, null)
                 }
                 if (displayWidth >= displayHeight){
                     val scale = canvas.height.toFloat()/bitmap.height.toFloat()
                     val dst = RectF((canvas.width - bitmap.width * scale) / 2, 0F,
-                        canvas.width - (canvas.width - bitmap.width * scale) / 2, canvas.height.toFloat())
+                            canvas.width - (canvas.width - bitmap.width * scale) / 2, canvas.height.toFloat())
                     canvas.drawBitmap(bitmap, null, dst, null)
                 }
                 textureView.unlockCanvasAndPost(canvas)
@@ -488,11 +500,8 @@ class ChallengeModeFragment : Fragment(), PoseEstimatorUser, TextToSpeech.OnInit
             textViewFPS.text = activity?.getString(R.string.timePerFrameTextView, (timestamp - lastUpdated).toInt())
             textViewPoseConfidence.text = activity?.getString(R.string.confidenceTextView, (confidence * 10000 / 100).toInt())
             textViewPose.text = activity?.getString(R.string.poseTextView, pose)
-            textViewTargetPose.text = activity?.getString(R.string.targetPoseTextView, targetPose)
             lastUpdated = timestamp
-            textViewScore.text = activity?.getString(R.string.scoreTextView, correctPoses, totalPoses)
         }
-
     }
 
     // from "Getting Started with CameraX"
@@ -505,17 +514,17 @@ class ChallengeModeFragment : Fragment(), PoseEstimatorUser, TextToSpeech.OnInit
     // starts camera if permissions were granted
     // closes activity if not (returns to main menu)
     override fun onRequestPermissionsResult(
-        requestCode: Int, permissions: Array<String>, grantResults:
-        IntArray
+            requestCode: Int, permissions: Array<String>, grantResults:
+            IntArray
     ) {
         if (requestCode == REQUEST_CODE_PERMISSIONS) {
             if (allPermissionsGranted()) {
                 startCamera()
             } else {
                 Toast.makeText(
-                    context,
-                    getString(R.string.permissionNotGranted),
-                    Toast.LENGTH_SHORT
+                        context,
+                        getString(R.string.permissionNotGranted),
+                        Toast.LENGTH_SHORT
                 ).show()
                 activity?.finish()
             }
@@ -530,17 +539,17 @@ class ChallengeModeFragment : Fragment(), PoseEstimatorUser, TextToSpeech.OnInit
         cameraProviderFuture?.addListener({
             val cameraProvider: ProcessCameraProvider = cameraProviderFuture.get()
             val imageAnalyzer = ImageAnalysis.Builder()
-                .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST) // keeps only latest frame in buffer
-                .setTargetResolution(targetSize)  // input size of pose estimation model
-                .build()
-                .also {
-                    it.setAnalyzer(cameraExecutor, analyzer)  // frames will be sent to analyzer (Pose Estimator)
-                }
+                    .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST) // keeps only latest frame in buffer
+                    .setTargetResolution(targetSize) // input size of pose estimation model
+                    .build()
+                    .also {
+                        it.setAnalyzer(cameraExecutor, analyzer) // frames will be sent to analyzer (Pose Estimator)
+                    }
 
             try {
                 cameraProvider.unbindAll()
                 cameraProvider.bindToLifecycle(
-                    this, lensFacing, imageAnalyzer) // starts camera session
+                        this, lensFacing, imageAnalyzer)
 
             } catch (exc: Exception) {
                 Log.e("CameraX", "Use case binding failed", exc)
@@ -549,102 +558,89 @@ class ChallengeModeFragment : Fragment(), PoseEstimatorUser, TextToSpeech.OnInit
         }, ContextCompat.getMainExecutor(context))
     }
 
-    // returns random pose
-    private fun randomPose(): String
+    // filters list of poses from all entries that lasted shorter than the threshold and
+    // calculate duration of each pose based on timestamps
+    private fun filterListOfPoses(listOfPoses: List<TimestampedPose>):List<TimestampedPose>
     {
-        val randomNumber = nextInt(10)
-        var pose = getString(R.string.unknownPose)
-        when (randomNumber) {
-            0 -> {pose = getString(R.string.treePose)}
-            1 -> {pose = getString(R.string.warriorIPose)}
-            2 -> {pose = getString(R.string.downwardDogPose)}
-            3 -> {pose = getString(R.string.mountainPose)}
-            4 -> {pose = getString(R.string.warriorIIPose)}
-            5 -> {pose = getString(R.string.bowPose)}
-            6 -> {pose = getString(R.string.camelPose)}
-            7 -> {pose = getString(R.string.plankPose)}
-            8 -> {pose = getString(R.string.chairPose)}
-            9 -> {pose = getString(R.string.garlandPose)}
-        }
-        return pose
-    }
+        // two temporary list which will be used during the filtering operation
+        // a lot of elements will be "deleted" so it is easier to copy elements between two lists
+        // rather than use only original list and keep track of all the changing values and iterators
+        val temporaryList1: MutableList<TimestampedPose> = mutableListOf()
+        val temporaryList2: MutableList<TimestampedPose> = mutableListOf()
 
-    // checks if correct pose was held long enough. if yes then it returns true
-    private fun checkPose(): Boolean
-    {
-        var poseCorrect = true
-        val reversedList: MutableList<TimestampedPose> = mutableListOf()
-
-        // checks if enough time has even passed since last correctly done pose
-        reversedList.addAll(listOfPoses.asReversed())
-        if (reversedList[0].timestamp - reversedList.lastOrNull()!!.timestamp < holdTimeThreshold
-                || reversedList.size == 0 || reversedList.size == 1)
+        // last element will be lost so it's timestamp has to be kept in separate variable to
+        // calculate duration of the last pose correctly
+        var lastTimestamp = 0L
+        if (listOfPoses.isNotEmpty())
         {
-            poseCorrect = false
-            return poseCorrect
+            lastTimestamp = listOfPoses.last().timestamp
         }
 
-        // checks if the correct pose was held long enough.
-        // timestamps are in milliseconds and threshold is in seconds so it has to be multiplied
-        for (pose in reversedList)
+        // step one - detect and save only the elements where the poses change.
+        for (i in listOfPoses.indices)
         {
-            if (reversedList[0].timestamp - pose.timestamp < holdTimeThreshold * 1000 &&
-                    pose.poseName != targetPose)
+            if ( i > 0 )
             {
-                poseCorrect = false
+                if (listOfPoses[i].poseName != listOfPoses[i - 1].poseName)
+                {
+                    temporaryList1.add(listOfPoses[i])
+                }
             }
-
-            // delete all records that no longer are needed.
-            if (reversedList[0].timestamp - pose.timestamp >= holdTimeThreshold * 1000)
+            if (i == 0)
             {
-                listOfPoses.remove(pose)
+                temporaryList1.add(listOfPoses[i])
             }
         }
-        return poseCorrect
-    }
 
-    // selects new target pose, new pose can't be the same as the old one
-    // if TTS is enabled it is activated
-    private fun changePose()
-    {
-        var newPose: String
-        do
+        // step 2 - delete all the poses that lasted shorter than the threshold
+        // threshold is in seconds and timestamps in milliseconds, threshold has to be multiplied by 1000
+        for (i in temporaryList1.indices)
         {
-            newPose = randomPose()
-        }
-        while(newPose == targetPose)
-        targetPose = newPose
-        listOfPoses.clear()
-        if (enableVoiceMessages)
-        {
-            tts.speak(targetPose, TextToSpeech.QUEUE_FLUSH, null, "")
-        }
-        totalPoses += 1
-    }
-
-    // sets the background of textvView displaying target pose green fr 0.5 second.
-    private suspend fun greenSignal()
-    {
-        withContext(Main)
-        {
-            textViewTargetPose.setBackgroundColor(Color.GREEN)
-            delay(500)
-            textViewTargetPose.setBackgroundColor(Color.TRANSPARENT)
-        }
-    }
-
-    // initializes TTS
-    override fun onInit(status: Int) {
-        if (status == TextToSpeech.SUCCESS) {
-            val result = tts.setLanguage(Locale.ENGLISH)
-
-            if (result == TextToSpeech.LANG_MISSING_DATA || result == TextToSpeech.LANG_NOT_SUPPORTED) {
-                Log.e("TTS","The Language specified is not supported!")
-                val toast = Toast.makeText(context, R.string.ttsInitFailed, Toast.LENGTH_LONG)
-                toast.show()
+            if (i > 0) {
+                if ((temporaryList1[i].timestamp - temporaryList1[i - 1].timestamp) >= timeThreshold * 1000) {
+                    temporaryList2.add(temporaryList1[i])
+                }
             }
-        } else {
-            Log.e("TTS", "Initialization Failed!")
+            else if (i == 0)
+            {
+                temporaryList2.add(temporaryList1[i])
+            }
         }
+
+        // clear temporaryList1 so it can be used again, at this point all the valuable data is
+        // stored in temporaryList2
+        // step 3 - once again detect and save only the elements where the poses change
+        temporaryList1.clear()
+        for (i in temporaryList2.indices)
+        {
+            if ( i > 0 )
+            {
+                if (temporaryList2[i].poseName != temporaryList2[i - 1].poseName)
+                {
+                    temporaryList1.add(temporaryList2[i])
+                }
+            }
+            if (i == 0)
+            {
+                temporaryList1.add(temporaryList2[i])
+            }
+        }
+
+        // step 4 - calculate duration of each pose based on timestamps
+        val finalList: MutableList<TimestampedPose> = mutableListOf()
+        for (i in temporaryList1.indices)
+        {
+            if (i < temporaryList1.lastIndex)
+            {
+                finalList.add(TimestampedPose(temporaryList1[i].poseName,
+                        temporaryList1[i + 1].timestamp - temporaryList1[i].timestamp))
+            }
+            else
+            {
+                finalList.add(TimestampedPose(temporaryList1[i].poseName,
+                        lastTimestamp - temporaryList1[i].timestamp))
+            }
+        }
+        return finalList
     }
 }

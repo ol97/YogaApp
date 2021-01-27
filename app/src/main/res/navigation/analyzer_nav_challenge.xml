@@ -3,24 +3,12 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/analyzer_nav"
-    app:startDestination="@id/recorderFragment">
+    app:startDestination="@id/challengeModeFragment">
 
-    <fragment
-        android:id="@+id/recorderFragment"
-        android:name="com.example.yogaapp.RecorderFragment"
-        android:label="Recorder"
-        tools:layout="@layout/fragment_recorder" >
-        <action
-            android:id="@+id/action_recorderFragment_to_settingsFragment"
-            app:destination="@id/settingsFragment" />
-    </fragment>
     <fragment
         android:id="@+id/settingsFragment"
         android:name="com.example.yogaapp.SettingsFragment"
         android:label="Settings" >
-        <action
-            android:id="@+id/action_settingsFragment_to_recorderFragment"
-            app:destination="@id/recorderFragment" />
         <action
             android:id="@+id/action_settingsFragment_to_challengeModeFragment"
             app:destination="@id/challengeModeFragment" />

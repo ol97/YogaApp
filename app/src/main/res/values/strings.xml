@@ -1,4 +1,87 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">YogaApp</string>
+    <string name="timePerFrameTextView">Time per frame: %1$d ms</string>
+    <string name="timePerFrameTextViewEmpty">Time per frame:</string>
+    <string name="confidenceTextView">Confidence: %1$d %%</string>
+    <string name="confidenceTextViewEmpty">Confidence:</string>
+    <string name="poseTextView">Pose: %1$s</string>
+    <string name="poseTextViewEmpty">Pose:</string>
+    <string name="targetPoseTextView">Target pose: %1$s</string>
+    <string name="targetPoseTextViewEmpty">Target pose:</string>
+    <string name="nameTextView">Name: %1$s</string>
+    <string name="dateTextView">Date: %1$s</string>
+    <string name="timeTextView">Time: %1$s</string>
+    <string name="durationTextView">Duration: %1$s</string>
+    <string name="scoreTextView">Score: %1$d / %2$d</string>
+    <string name="scoreTextViewEmpty">Score:</string>
+    <string name="permissionNotGranted">Permissions not granted by the user.</string>
+    <string name="setName">Set name</string>
+    <string name="insertName">Name:</string>
+    <string name="nameTooLong">Name is too long!</string>
+    <string name="save">Save</string>
+    <string name="cancel">Cancel</string>
+    <string name="nameInUse">Name already in use!</string>
+    <string name="savingFailed">Saving failed!</string>
+    <string name="savingSucceeded">Saving succeeded!</string>
+    <string name="warning">Warning</string>
+    <string name="deleteConfirmation">Are you sure?</string>
+    <string name="delete">Delete</string>
+    <string name="rename">Rename</string>
+    <string name="insertNewName">Insert new name</string>
+    <string name="ok">OK</string>
+    <string name="seconds">seconds</string>
+    <string name="treePose">Tree pose</string>
+    <string name="warriorIPose">Warrior I pose</string>
+    <string name="warriorIIPose">Warrior II pose</string>
+    <string name="downwardDogPose">Downward dog pose</string>
+    <string name="mountainPose">Mountain pose</string>
+    <string name="bowPose">Bow pose</string>
+    <string name="camelPose">Camel pose</string>
+    <string name="garlandPose">Garland pose</string>
+    <string name="plankPose">Plank pose</string>
+    <string name="chairPose">Chair pose</string>
+    <string name="unknownPose">Unknown pose</string>
+    <string name="challengeModeButton">Challenge Mode</string>
+    <string name="recorderModeButton">Recording Mode</string>
+    <string name="historyButton">History</string>
+    <string name="next">Next</string>
+    <string name="startRecording">Start recording</string>
+    <string name="stopRecording">Stop recording</string>
+    <string name="poseEstimationModel">Pose estimation model</string>
+    <string name="thresholds">Thresholds</string>
+    <string name="poseEstimationConfidenceThreshold">Keypoint confidence threshold</string>
+    <string name="filteringTimeThreshold">Filtering time threshold (seconds)</string>
+    <string name="holdPoseThreshold">Pose hold time (seconds)</string>
+    <string name="showTimePerFrame">Show time per frame</string>
+    <string name="uiElements">UI elements</string>
+    <string name="other">Other</string>
+    <string name="enableVoiceMessages">Enable voice messages</string>
+    <string name="ttsInitFailed">Text to speech initialization failed!</string>
+    <string name="pointSize">Marker size</string>
+    <string name="about">About</string>
+    <string name="start">Start</string>
+    <string name="stop">Stop</string>
+    <string name="whatIsYogaApp">What is YogaApp?</string>
+    <string name="aboutYogaApp">YogaApp is an app aimed at beginners. The goal of this app is to make training yoga more engaging and fun.</string>
+    <string name="supportedPoses">Supported poses</string>
+    <string name="aboutSupportedPoses">The classifier used in YogaApp can recognize ten popular yoga poses (list below).
+        For different poses, either a side view or a front view is required.
+        In the case of poses requiring side view, it does not matter whether you are facing left or right.</string>
+    <string name="licenseAnnotation">Above images are licensed under different creative commons licenses.
+        <a href="http://www.yogaartandscience.com/poses/poses.html">Source 1</a>, <a href="https://www.flickr.com/people/yogamama-co-uk/">Source 2</a>,
+        <a href="https://en.wikipedia.org/wiki/M%C4%81l%C4%81sana#/media/File:Upave%C5%9B%C4%81sana.jpg">Source 3</a></string>
+    <string name="modes">Modes of operation</string>
+    <string name="modesDescription">In the challenge mode, your goal is to perform the pose indicated by
+        the application and holding it for a set amount of time. If the pose is too difficult,
+        you can use the "NEXT" button to skip it.
+        Recording mode can be used to save the course of your yoga training. You can view a list
+        of poses and the time you held them for in the history tab.</string>
+    <string name="poseEstimationModelDescription">YogaApp uses EfficientPose
+        (<a href="https://arxiv.org/abs/2004.12186">paper</a>, <a href="https://github.com/daniegr/EfficientPose">Github</a>)
+        models and a custom classifier to recognize yoga poses. EfficientPose RT is the fastest model and EfficientPose III is the most accurate.
+        <a href="https://sites.google.com/view/yoga-82/home">Yoga82</a>
+        and <a href="https://www.amarchenkova.com/2018/12/04/data-set-convolutional-neural-network-yoga-pose/">Anastasia Marchenkova\'s</a>
+        datasets were used during the training of the classifier.</string>
+    <string name="developedBy">Developed by: Łukasz Olejnik</string>
 </resources>

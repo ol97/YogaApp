@@ -6,26 +6,31 @@ import android.database.sqlite.SQLiteOpenHelper
 import android.util.Log
 import java.lang.Exception
 
-class Archive(context: Context) : SQLiteOpenHelper(context,"Archive.db", null, 1) {
+// Main class in which database is defined, created and updated.
+// Database schema is defined in ArchiveDbSchema
+// All I/O methods are defined in ArchiveHelper
 
+class Archive(context: Context) : SQLiteOpenHelper(context,"Archive.db", null, 2) {
+
+
+    // creates database
     override fun onCreate(db: SQLiteDatabase?) {
         if (db != null) {
             try{
                 db.execSQL("create table " + ArchiveDbSchema.SessionTable.TABLE_NAME + "(" +
                         "id integer primary key autoincrement, " +
-                        "UNIQUE(" +
-                        ArchiveDbSchema.SessionTable.Cols.NAME + "), " +
+                        ArchiveDbSchema.SessionTable.Cols.NAME + " unique , " +
                         ArchiveDbSchema.SessionTable.Cols.DATE + ", " +
                         ArchiveDbSchema.SessionTable.Cols.TIME + ", " +
                         ArchiveDbSchema.SessionTable.Cols.DURATION + ")" )
 
-                db.execSQL("create table " + ArchiveDbSchema.PosesInSessionTable.TABLE_NAME + " (" +
-                        " id integer primary key autoincrement, " +
-                        ArchiveDbSchema.PosesInSessionTable.Cols.DURATION + ", " +
-                        ArchiveDbSchema.PosesInSessionTable.Cols.POSE_NAME + ", " +
-                        ArchiveDbSchema.PosesInSessionTable.Cols.NUMBER_IN_SEQUENCE + ", " +
-                        ArchiveDbSchema.PosesInSessionTable.Cols.SESSION_ID + ", " +
-                        "FOREIGN KEY (" + ArchiveDbSchema.PosesInSessionTable.Cols.SESSION_ID +
+                db.execSQL("create table " + ArchiveDbSchema.SessionDetailsTable.TABLE_NAME +
+                        " ( id integer primary key autoincrement, " +
+                        ArchiveDbSchema.SessionDetailsTable.Cols.DURATION + ", " +
+                        ArchiveDbSchema.SessionDetailsTable.Cols.POSE_NAME + ", " +
+                        ArchiveDbSchema.SessionDetailsTable.Cols.NUMBER_IN_SEQUENCE + ", " +
+                        ArchiveDbSchema.SessionDetailsTable.Cols.SESSION_ID + ", " +
+                        "FOREIGN KEY (" + ArchiveDbSchema.SessionDetailsTable.Cols.SESSION_ID +
                         ") REFERENCES " + ArchiveDbSchema.SessionTable.TABLE_NAME + " (id))" )
             }
             catch(e:Exception)
@@ -38,9 +43,11 @@ class Archive(context: Context) : SQLiteOpenHelper(context,"Archive.db", null, 1
 
     }
 
+    // updates database if old and new versions are different.
+    // Of course "Drop table" is only good for testing, not real life application.
     override fun onUpgrade(db: SQLiteDatabase?, oldVersion: Int, newVersion: Int) {
         db?.execSQL("DROP TABLE IF EXISTS " + ArchiveDbSchema.SessionTable.TABLE_NAME)
-        db?.execSQL("DROP TABLE IF EXISTS " + ArchiveDbSchema.PosesInSessionTable.TABLE_NAME)
+        db?.execSQL("DROP TABLE IF EXISTS " + ArchiveDbSchema.SessionDetailsTable.TABLE_NAME)
 
         onCreate(db)
     }

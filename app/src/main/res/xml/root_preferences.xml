@@ -1,28 +1,29 @@
 <PreferenceScreen xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:android="http://schemas.android.com/apk/res/android">
 
-    <PreferenceCategory app:title="Pose Estimation Model">
+    <PreferenceCategory app:title="@string/poseEstimationModel">
 
         <ListPreference
             app:defaultValue="RT"
             app:entries="@array/reply_entries"
             app:entryValues="@array/reply_values"
             app:key="modelType"
-            app:title="Pose estimation model"
+            app:negativeButtonText="@string/cancel"
+            app:title="@string/poseEstimationModel"
             app:useSimpleSummaryProvider="true" />
 
     </PreferenceCategory>
 
-    <PreferenceCategory app:title="Thresholds">
+    <PreferenceCategory app:title="@string/thresholds">
         <SeekBarPreference
             android:key="confidenceThreshold"
-            app:title="Pose estimation confidence threshold"
+            app:title="@string/poseEstimationConfidenceThreshold"
             app:showSeekBarValue="true"
             app:defaultValue="20" />
 
         <SeekBarPreference
             android:key="timeThreshold"
-            app:title="Filtering time threshold (seconds)"
+            app:title="@string/filteringTimeThreshold"
             app:seekBarIncrement="1"
             android:max="10"
             app:showSeekBarValue="true"
@@ -30,19 +31,37 @@
 
         <SeekBarPreference
             android:key="holdPoseThreshold"
-            app:title="Holding pose time threshold (seconds)"
+            app:title="@string/holdPoseThreshold"
             app:seekBarIncrement="1"
             android:max="10"
+            app:min="1"
             app:showSeekBarValue="true"
             app:defaultValue="1" />
 
     </PreferenceCategory>
 
-    <PreferenceCategory app:title="UI Elements">
+    <PreferenceCategory app:title="@string/uiElements">
         <SwitchPreferenceCompat
             app:key="showFPS"
             app:defaultValue="true"
-            app:title="Show time per frame"/>
+            app:title="@string/showTimePerFrame"/>
+
+        <SeekBarPreference
+            android:key="pointSize"
+            app:title="@string/pointSize"
+            app:seekBarIncrement="1"
+            android:max="10"
+            app:min="1"
+            app:showSeekBarValue="true"
+            app:defaultValue="5" />
+    </PreferenceCategory>
+
+    <PreferenceCategory app:title="@string/other">
+        <SwitchPreferenceCompat
+            app:key="enableVoiceMessages"
+            app:defaultValue="false"
+            app:title="@string/enableVoiceMessages"/>
+
     </PreferenceCategory>
 
 </PreferenceScreen>

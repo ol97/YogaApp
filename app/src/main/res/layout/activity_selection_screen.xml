@@ -3,6 +3,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="@drawable/background"
     tools:context=".SelectionScreenActivity">
 
     <LinearLayout
@@ -16,21 +17,28 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:padding="16dp"
-            android:text="Challenge Mode" />
+            android:text="@string/challengeModeButton" />
 
         <Button
-            android:id="@+id/buttonRecorder"
+            android:id="@+id/buttonRecordingMode"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:padding="16dp"
-            android:text="Recorder" />
+            android:text="@string/recorderModeButton" />
 
         <Button
             android:id="@+id/buttonHistory"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:padding="16dp"
-            android:text="History" />
+            android:text="@string/historyButton" />
+
+        <Button
+            android:id="@+id/buttonAbout"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:padding="16dp"
+            android:text="@string/about" />
 
     </LinearLayout>
 </FrameLayout>

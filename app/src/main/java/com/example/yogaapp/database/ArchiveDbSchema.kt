@@ -1,5 +1,7 @@
 package com.example.yogaapp.database
 
+// Helper class containing names of all tables and their columns. Basically a database schema.
+
 class ArchiveDbSchema {
     class SessionTable {
         companion object{
@@ -17,9 +19,9 @@ class ArchiveDbSchema {
         }
     }
 
-    class PosesInSessionTable {
+    class SessionDetailsTable {
         companion object{
-            const val TABLE_NAME = "poseinsession"
+            const val TABLE_NAME = "sessiondetails"
         }
 
         class Cols {
