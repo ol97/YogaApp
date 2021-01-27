@@ -8,6 +8,7 @@
             app:entries="@array/reply_entries"
             app:entryValues="@array/reply_values"
             app:key="modelType"
+            app:negativeButtonText="@string/cancel"
             app:title="@string/poseEstimationModel"
             app:useSimpleSummaryProvider="true" />
 

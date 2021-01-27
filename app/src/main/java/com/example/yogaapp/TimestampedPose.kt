@@ -3,6 +3,8 @@ package com.example.yogaapp
 import android.os.Parcel
 import android.os.Parcelable
 
+// helper class introduced to allow saving list of pose names and timestamps in savedInstanceState Bundle
+// data type has to implement Parcelable to do that, so new class had to be defined
 class TimestampedPose(var poseName: String, var timestamp: Long) : Parcelable {
 
     override fun writeToParcel(parcel: Parcel, flags: Int) {

@@ -14,7 +14,7 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.YogaApp">
         <activity android:name=".AboutActivity"></activity>
-        <activity android:name=".ArchiveActivity" />
+        <activity android:name=".HistoryActivity" />
         <activity android:name=".SelectionScreenActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />

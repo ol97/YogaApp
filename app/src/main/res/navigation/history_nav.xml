@@ -2,7 +2,7 @@
 <navigation xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
-    android:id="@+id/archive_nav"
+    android:id="@+id/history_nav"
     app:startDestination="@id/itemListFragment">
 
     <fragment
@@ -22,7 +22,7 @@
         <action
             android:id="@+id/action_sessionDetailsFragment_to_itemListFragment"
             app:launchSingleTop="true"
-            app:popUpTo="@+id/archive_nav"
+            app:popUpTo="@+id/history_nav"
             app:popUpToInclusive="true"
             app:destination="@id/itemListFragment" />
         <argument

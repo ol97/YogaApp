@@ -2,8 +2,6 @@ package com.example.yogaapp
 
 import android.Manifest
 import android.annotation.SuppressLint
-import android.app.Application
-import android.content.Context
 import android.content.SharedPreferences
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
@@ -31,50 +29,100 @@ import java.util.*
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
-import kotlin.math.round
 
-class RecorderFragment : Fragment(), PoseEstimatorUser {
+// Fragment handling logic of Recording Mode
+// PoseEstimatorUser is an interface used to pass data from PoseEstimator to whatever
+// is using it ("Recording Mode" or "Challenge Mode").
+class RecordingModeFragment : Fragment(), PoseEstimatorUser {
 
+    // camera executor, basically a thread used by cameraX so it doesn't block the UI thread.
     private lateinit var cameraExecutor: ExecutorService
+
+    // all widgets visible ob the screen in "Recording Mode"
     private lateinit var textureView: TextureView
     private lateinit var textViewFPS: TextView
     private lateinit var textViewPoseConfidence: TextView
     private lateinit var textViewPose: TextView
     private lateinit var imageButtonSettings: ImageButton
-    private lateinit var orientationListener: OrientationEventListener
-    private lateinit var analyzer:PoseEstimator
-    private lateinit var targetSize: Size
     private lateinit var toggleButtonRecord: ToggleButton
-    private var lastUpdated:Long = 0
     private lateinit var imageButtonSwitchCamera:ImageButton
+
+    // orientation listener to check orientation of the device.
+    // Resources.Configuration.orientation only tells whether it's portrait or landscape, but doesn't
+    // tell which ("left" or "right") landscape it is.
+    private lateinit var orientationListener: OrientationEventListener
+
+    // PoseEstimator - class handling all image processing.
+    // modelType - RT, I, II, III
+    // variable "analyzer" will be sometimes regarded to as PoseEstimator
+    private lateinit var analyzer: PoseEstimator
+    private lateinit var modelType: String
+
+    // target image resolution for cameraX based on selected pose estimation model.
+    // (input resolution of pose estimation model)
+    private lateinit var targetSize: Size
+
+    // timestamp of when was the last frame received, used to calculate time per frame
+    private var lastUpdated:Long = 0
+
+    // indicates whether back or front camera is used, image from front camera is mirrored
+    // so it has to be flipped, also rotation is different
     private var lensFacing = CameraSelector.DEFAULT_BACK_CAMERA
-    private val LENS_FACING_KEY: String = "lens_facing"
+
+    // current device rotation
     private var rotation = 0
+
+    // display height and width, changes with orientation (portrait/landscape)
     private var displayHeight:Int = 0
     private var displayWidth:Int = 0
+
+    // variable necessary to retrieve settings from settings screen,
+    // I'm using predefined Settings Fragment.
     private lateinit var preferences:SharedPreferences
+
+    // Time per frame visibility
     private var showFPS: Boolean = true
+
+    // Confidence threshold for keypoints detected by PoseEstimator. If confidence for a point is lower
+    // than the threshold then it's coordinates are set to [0,0] and it is not displayed.
     private var confidenceThreshold:Int = 20
+
+    // a minimal time for which a pose has to be held for to be written in database
+    // threshold for filtering list of poses before saving it to database
     private var timeThreshold:Int = 1
-    private lateinit var modelType: String
+
+    // Keys for asking for camera permissions, based on "Getting Started with CameraX"
     private val REQUEST_CODE_PERMISSIONS = 10
     private val REQUIRED_PERMISSIONS = arrayOf(Manifest.permission.CAMERA)
+
+    // keys for reading saved data from savedInstanceState
+    private val LENS_FACING_KEY: String = "lens_facing"
     private val KEY_RECORDING = "recording_flag"
     private val KEY_LIST_OF_POSES = "list_of_poses"
+
+    // flag indicating whether recording is active
     private var recordingFlag: Boolean = false
+
+    // list which holds names of all poses with timestamps during recording
     private var listOfPoses: MutableList<TimestampedPose> = mutableListOf()
+
+    // multiplier for keypoint marker size
     private var pointSize: Int = 5
 
 
+    // load settings and initialize everything
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
         loadSettings()
+
+        //get display size
         val displayMetrics = DisplayMetrics()
         activity?.windowManager?.defaultDisplay?.getMetrics(displayMetrics)
         displayHeight = displayMetrics.heightPixels
         displayWidth = displayMetrics.widthPixels
 
+        // set target size based on model selected in settings
         if (modelType == "I"){
             targetSize = Size(256, 256)
         }
@@ -88,14 +136,19 @@ class RecorderFragment : Fragment(), PoseEstimatorUser {
             targetSize = Size(224, 224)
         }
 
+        // create instance of PoseEstimator, pass confidenceThreshold for point detection and
+        // point marker size (multiplier)
         analyzer = PoseEstimator(
                 requireContext(),
                 modelType, this)
         analyzer.updateThreshold(confidenceThreshold)
         analyzer.setPointSize(pointSize)
 
+        // create cameraExecutor (basically start a thread for the camera)
         cameraExecutor = Executors.newSingleThreadExecutor()
 
+        // set orientationListener so it automatically sends orientation to PoseEstimator,
+        // amount for which the image has to be rotated is different for front and back cameras
         orientationListener = object : OrientationEventListener(context,
                 SensorManager.SENSOR_DELAY_NORMAL) {
             override fun onOrientationChanged(orientation: Int) {
@@ -142,6 +195,8 @@ class RecorderFragment : Fragment(), PoseEstimatorUser {
             }
         }
 
+        // check if there is a savedInstanceState of this fragment (returning from settings, configuration changed etc.)
+        // if yes then restore data.
         if (savedInstanceState != null) {
             recordingFlag = savedInstanceState.getBoolean(KEY_RECORDING)
             if (savedInstanceState.getBoolean(LENS_FACING_KEY)) {
@@ -154,6 +209,8 @@ class RecorderFragment : Fragment(), PoseEstimatorUser {
                 listOfPoses = savedInstanceState.getParcelableArrayList<TimestampedPose>(KEY_LIST_OF_POSES) as MutableList<TimestampedPose>
             }
         }
+
+        // if camera permissions are granted then start camera, if no then ask for them
         if (allPermissionsGranted()) {
             startCamera()
         }
@@ -164,6 +221,7 @@ class RecorderFragment : Fragment(), PoseEstimatorUser {
         }
     }
 
+    // inflate fragment layout
     override fun onCreateView(
             inflater: LayoutInflater, container: ViewGroup?,
             savedInstanceState: Bundle?
@@ -171,16 +229,27 @@ class RecorderFragment : Fragment(), PoseEstimatorUser {
         return inflater.inflate(R.layout.fragment_recorder, container, false)
     }
 
+    // when layout is inflated find all widgets, set onClickListeners etc. (configure UI)
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         imageButtonSettings = view.findViewById(R.id.imageButtonSettings)
+
+        // navigate to settings after clicking "Settings" button
         imageButtonSettings.setOnClickListener {
             findNavController().navigate(R.id.action_recorderFragment_to_settingsFragment)
         }
+
+        // setting visibility of timePerFrame textView. Setting visibility to View.GONE
+        // frees up the slot in LinearLayout
         textViewFPS = view.findViewById(R.id.textViewFPS)
         if (showFPS){textViewFPS.visibility = View.VISIBLE}
         else {textViewFPS.visibility = View.GONE}
+
         textureView = view.findViewById(R.id.textureView)
         textViewPoseConfidence = view.findViewById(R.id.textViewPoseConfidence)
+
+        // after switching lenses update the rotation for the first frame manually and restart the camera,
+        // orientationListener only updates after detecting change in orientation,
+        // if device was stationary then the rotation passed to PoseEstimator wouldn't be updated.
         imageButtonSwitchCamera = view.findViewById(R.id.imageButtonSwitchCamera)
         imageButtonSwitchCamera.setOnClickListener {
             if (lensFacing ==  CameraSelector.DEFAULT_BACK_CAMERA) {
@@ -225,40 +294,56 @@ class RecorderFragment : Fragment(), PoseEstimatorUser {
             startCamera()
         }
         textViewPose = view.findViewById(R.id.textViewPose)
+
+        // set onClickListener for the toggle button that starts/stops the recording
+        // when the recording starts then clear the list
+        // if the recording is stops then show a dialog box in which user can name
+        // the training session being saved
         toggleButtonRecord = view.findViewById(R.id.toggleButtonRecord)
         toggleButtonRecord.isChecked = recordingFlag
         toggleButtonRecord.setOnCheckedChangeListener { buttonView, isChecked ->
             recordingFlag = isChecked
+            // if new recording is starting then clear the list
             if (isChecked)
             {
                 listOfPoses.clear()
             }
-            if (!isChecked && listOfPoses.lastIndex > 2)
+            // if a recording is stopped show dialog
+            // there is no point in saving a session if only one frame was saved, duration can't be calculated
+            if (!isChecked && listOfPoses.lastIndex >= 2)
             {
+                // build and show dialog
                 val alert = context?.let { it1 -> AlertDialog.Builder(it1) }
                 alert?.setTitle(getString(R.string.setName))
                 alert?.setMessage(getString(R.string.insertName))
                 val input = EditText(context)
                 alert?.setView(input)
+                // load all currently taken names to later check if the name entered by user is valid
                 val names = context?.let { ArchiveHelper.getInstance(it) }!!.readSessionNames()
                 alert?.setPositiveButton(getString(R.string.save)) { dialog, whichButton -> }
                 alert?.setNegativeButton(getString(R.string.cancel)) { dialog, which -> }
                 val dialog = alert!!.create()
                 dialog.show()
+
+                // positive button - "Save"
+                // negative button - "Cancel" - closes the dialog
                 dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener{
-                    val value = input.text.toString()
-                    if (names.contains(value)) {
+                    val name = input.text.toString()
+                    // check if name is already taken, if yes show Toast
+                    if (names.contains(name)) {
                         val toast = Toast.makeText(context, getString(R.string.nameInUse), Toast.LENGTH_SHORT)
                         toast.show()
                     }
-                    else if (input.text.toString().length >= 20){
+                    // check if name is too long, if yes show Toast
+                    else if (name.length >= 20){
                         val toast = Toast.makeText(context, getString(R.string.nameTooLong), Toast.LENGTH_SHORT)
                         toast.show()
                     }
+                    // if name is ok save session to database. display Toast with confirmation
                     else {
                         context?.let {
                             val archiveHelper = ArchiveHelper.getInstance(it)
-                            val ok = archiveHelper?.insertSession(filterListOfPoses(listOfPoses), value)
+                            val ok = archiveHelper?.insertSession(filterListOfPoses(listOfPoses), name)
                             if (!ok!!) {
                                 val toast = Toast.makeText(context, getString(R.string.savingFailed), Toast.LENGTH_SHORT)
                                 toast.show()
@@ -279,6 +364,11 @@ class RecorderFragment : Fragment(), PoseEstimatorUser {
         super.onResume()
 
         orientationListener.enable()
+
+        // check to see if a different model was selected in the settings.
+        // if yes then reload model and all parameters associated with it and restart camera
+        // (different target resolution for different models),
+        // check to see if time per frame textView visibility was changed and change if needed.
         val oldModelType = modelType
         val oldShowFPS = showFPS
         loadSettings()
@@ -320,6 +410,9 @@ class RecorderFragment : Fragment(), PoseEstimatorUser {
         orientationListener.disable()
     }
 
+    // Shutdown thread handling camera, wait for its termination
+    // and release resources used by pose estimation model. Resources can be only released
+    // after the pose estimation model stops receiving and processing frames.
     override fun onDestroy() {
         super.onDestroy()
 
@@ -328,6 +421,8 @@ class RecorderFragment : Fragment(), PoseEstimatorUser {
         analyzer.releaseResources()
     }
 
+    // Write to Bundle (save) all necessary parameters on rotation, when locking screen,
+    // navigating to settings etc.
     override fun onSaveInstanceState(outState: Bundle) {
         super.onSaveInstanceState(outState)
 
@@ -344,6 +439,7 @@ class RecorderFragment : Fragment(), PoseEstimatorUser {
         }
     }
 
+    // load settings from preferences, preferences are basically all the settings in "Settings" screen
     private fun loadSettings(){
         preferences = PreferenceManager.getDefaultSharedPreferences(context)
         confidenceThreshold = preferences.getInt("confidenceThreshold", 20)
@@ -354,6 +450,9 @@ class RecorderFragment : Fragment(), PoseEstimatorUser {
 
     }
 
+    // method defined by PoseEstimatorUser interface. PoseEstimator returns bitmap, name of the pose,
+    // confidence for that pose, and timestamp of when was the frame passed to fragment.
+    // if recording is active add pose name with timestamp to the list
      override fun update(bitmap: Bitmap, pose: String, confidence: Float, timestamp: Long){
         updateUI(bitmap, pose, confidence, timestamp)
         if (recordingFlag)
@@ -364,7 +463,12 @@ class RecorderFragment : Fragment(), PoseEstimatorUser {
     }
 
     private fun updateUI(bitmap: Bitmap, pose: String, confidence: Float, timestamp: Long){
+
+        // all actions regarding UI must be performed on UI thread
         requireActivity().runOnUiThread {
+
+            // display image from PoseEstimator on TextureView,
+            // check orientation of the screen and scale bitmap
             try{
                 val canvas = textureView.lockCanvas()
                 canvas.drawColor(Color.BLACK)
@@ -384,11 +488,15 @@ class RecorderFragment : Fragment(), PoseEstimatorUser {
             } catch (e: Exception){
                 Log.d("TextureView", e.message.toString())
             }
+
+            // image from front facing camera is mirrored, it has to be flipped
             if (lensFacing == CameraSelector.DEFAULT_BACK_CAMERA) {
                 textureView.scaleX = 1F
             } else {
                 textureView.scaleX = -1F
             }
+
+            // update textViews
             textViewFPS.text = activity?.getString(R.string.timePerFrameTextView, (timestamp - lastUpdated).toInt())
             textViewPoseConfidence.text = activity?.getString(R.string.confidenceTextView, (confidence * 10000 / 100).toInt())
             textViewPose.text = activity?.getString(R.string.poseTextView, pose)
@@ -396,12 +504,15 @@ class RecorderFragment : Fragment(), PoseEstimatorUser {
         }
     }
 
-
+    // from "Getting Started with CameraX"
     private fun allPermissionsGranted() = REQUIRED_PERMISSIONS.all {
         ContextCompat.checkSelfPermission(requireActivity(), it) == PackageManager.PERMISSION_GRANTED
     }
 
-
+    // from "Getting Started with CameraX"
+    // checks results of permission request
+    // starts camera if permissions were granted
+    // closes activity if not (returns to main menu)
     override fun onRequestPermissionsResult(
             requestCode: Int, permissions: Array<String>, grantResults:
             IntArray
@@ -420,6 +531,7 @@ class RecorderFragment : Fragment(), PoseEstimatorUser {
         }
     }
 
+    // based on "Getting Started with CameraX", using image analysis use case
     @SuppressLint("RestrictedApi")
     private fun startCamera() {
         val cameraProviderFuture = context?.let { ProcessCameraProvider.getInstance(it) }
@@ -427,11 +539,11 @@ class RecorderFragment : Fragment(), PoseEstimatorUser {
         cameraProviderFuture?.addListener({
             val cameraProvider: ProcessCameraProvider = cameraProviderFuture.get()
             val imageAnalyzer = ImageAnalysis.Builder()
-                    .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
-                    .setTargetResolution(targetSize)
+                    .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST) // keeps only latest frame in buffer
+                    .setTargetResolution(targetSize) // input size of pose estimation model
                     .build()
                     .also {
-                        it.setAnalyzer(cameraExecutor, analyzer)
+                        it.setAnalyzer(cameraExecutor, analyzer) // frames will be sent to analyzer (Pose Estimator)
                     }
 
             try {
@@ -446,15 +558,25 @@ class RecorderFragment : Fragment(), PoseEstimatorUser {
         }, ContextCompat.getMainExecutor(context))
     }
 
+    // filters list of poses from all entries that lasted shorter than the threshold and
+    // calculate duration of each pose based on timestamps
     private fun filterListOfPoses(listOfPoses: List<TimestampedPose>):List<TimestampedPose>
     {
+        // two temporary list which will be used during the filtering operation
+        // a lot of elements will be "deleted" so it is easier to copy elements between two lists
+        // rather than use only original list and keep track of all the changing values and iterators
         val temporaryList1: MutableList<TimestampedPose> = mutableListOf()
         val temporaryList2: MutableList<TimestampedPose> = mutableListOf()
+
+        // last element will be lost so it's timestamp has to be kept in separate variable to
+        // calculate duration of the last pose correctly
         var lastTimestamp = 0L
         if (listOfPoses.isNotEmpty())
         {
             lastTimestamp = listOfPoses.last().timestamp
         }
+
+        // step one - detect and save only the elements where the poses change.
         for (i in listOfPoses.indices)
         {
             if ( i > 0 )
@@ -470,6 +592,8 @@ class RecorderFragment : Fragment(), PoseEstimatorUser {
             }
         }
 
+        // step 2 - delete all the poses that lasted shorter than the threshold
+        // threshold is in seconds and timestamps in milliseconds, threshold has to be multiplied by 1000
         for (i in temporaryList1.indices)
         {
             if (i > 0) {
@@ -483,6 +607,9 @@ class RecorderFragment : Fragment(), PoseEstimatorUser {
             }
         }
 
+        // clear temporaryList1 so it can be used again, at this point all the valuable data is
+        // stored in temporaryList2
+        // step 3 - once again detect and save only the elements where the poses change
         temporaryList1.clear()
         for (i in temporaryList2.indices)
         {
@@ -499,6 +626,7 @@ class RecorderFragment : Fragment(), PoseEstimatorUser {
             }
         }
 
+        // step 4 - calculate duration of each pose based on timestamps
         val finalList: MutableList<TimestampedPose> = mutableListOf()
         for (i in temporaryList1.indices)
         {

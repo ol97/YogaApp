@@ -5,11 +5,14 @@ import android.os.Bundle
 import android.text.method.LinkMovementMethod
 import android.widget.TextView
 
+// Activity hosting "About" fragment.
+
 class AboutActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_about)
 
+        // Make links in TextViews clickable.
         val textViewModelDescription = findViewById<TextView>(R.id.textViewModelDescription)
         val textViewLicenceAnnotation = findViewById<TextView>(R.id.textViewLicenseAnnotation)
         textViewModelDescription.movementMethod = LinkMovementMethod.getInstance()

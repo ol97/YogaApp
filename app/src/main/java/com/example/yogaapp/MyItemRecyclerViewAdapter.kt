@@ -9,7 +9,7 @@ import android.widget.TextView
 import androidx.navigation.Navigation
 import java.lang.Long.parseLong
 
-
+// based on predefined Fragment (List)
 class MyItemRecyclerViewAdapter(
     private val values: List<Array<String>>
 ) : RecyclerView.Adapter<MyItemRecyclerViewAdapter.ViewHolder>() {
@@ -20,6 +20,8 @@ class MyItemRecyclerViewAdapter(
         return ViewHolder(view)
     }
 
+
+    // binds data read from database to list elements
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         val item = values[position]
         holder.textViewName.text = item[1]
@@ -35,6 +37,7 @@ class MyItemRecyclerViewAdapter(
 
     override fun getItemCount(): Int = values.size
 
+    // single element of the list
     inner class ViewHolder(view: View) : RecyclerView.ViewHolder(view), View.OnClickListener {
         val textViewDate: TextView = view.findViewById(R.id.textViewDate)
         val textViewTime: TextView = view.findViewById(R.id.textViewTime)
@@ -47,6 +50,7 @@ class MyItemRecyclerViewAdapter(
         lateinit var duration: String
 
 
+        // makes elements of the list clickable, click navigates to details
         init {
             itemView.setOnClickListener(this)
         }

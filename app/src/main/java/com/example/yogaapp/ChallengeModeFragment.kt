@@ -32,60 +32,121 @@ import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 import kotlin.random.Random.Default.nextInt
 
+// Fragment handling logic of "Challenge Mode"
+// PoseEstimatorUser is an interface used to pass data from PoseEstimator to whatever
+// is using it ("Recording Mode" or "Challenge Mode"). TextTosSpeech.OnInitListener to use TTS.
 
 class ChallengeModeFragment : Fragment(), PoseEstimatorUser, TextToSpeech.OnInitListener {
+
+    // camera executor, basically a thread used by cameraX so it doesn't block the UI thread.
     private lateinit var cameraExecutor: ExecutorService
+
+    // all widgets visible on the screen in "Challenge Mode"
     private lateinit var textureView: TextureView
     private lateinit var textViewFPS: TextView
     private lateinit var textViewPoseConfidence: TextView
     private lateinit var textViewPose: TextView
     private lateinit var textViewScore: TextView
     private lateinit var imageButtonSettings: ImageButton
-    private lateinit var orientationListener: OrientationEventListener
-    private lateinit var analyzer:PoseEstimator
-    private lateinit var targetSize: Size
-    private lateinit var buttonNext: Button
-    private var lastUpdated:Long = 0
     private lateinit var imageButtonSwitchCamera: ImageButton
+    private lateinit var buttonNext: Button
+    private lateinit var textViewTargetPose: TextView
+
+    // orientation listener to check orientation of the device.
+    // Resources.Configuration.orientation only tells whether it's portrait or landscape, but doesn't
+    // tell which ("left" or "right") landscape it is.
+    private lateinit var orientationListener: OrientationEventListener
+
+    // PoseEstimator - class handling all image processing.
+    // modelType - RT, I, II, III
+    // variable "analyzer" will be sometimes regarded to as PoseEstimator
+    private lateinit var analyzer: PoseEstimator
+    private lateinit var modelType: String
+
+    // target image resolution for cameraX based on selected pose estimation model.
+    // (input resolution of pose estimation model)
+    private lateinit var targetSize: Size
+
+    // timestamp of when was the last frame received, used to calculate time per frame
+    private var lastUpdated:Long = 0
+
+    // indicates whether back or front camera is used, image from front camera is mirrored
+    // so it has to be flipped, also rotation is different
     private var lensFacing = CameraSelector.DEFAULT_BACK_CAMERA
-    private val LENS_FACING_KEY: String = "lens_facing"
+
+    // current device rotation
     private var rotation = 0
+
+    // display height and width, changes with orientation (portrait/landscape)
     private var displayHeight:Int = 0
     private var displayWidth:Int = 0
+
+    // variable necessary to retrieve settings from settings screen,
+    // I'm using predefined Settings Fragment.
     private lateinit var preferences: SharedPreferences
+
+    // Time per frame visibility
     private var showFPS: Boolean = true
+
+    // Confidence threshold for keypoints detected by PoseEstimator. If confidence for a point is lower
+    // than the threshold then it's coordinates are set to [0,0] and it is not displayed.
     private var confidenceThreshold:Int = 20
-    private var filteringTimeThreshold:Int = 1
-    private lateinit var modelType: String
+
+    // how long (in seconds) user has to hold the pose to get a point
+    private var holdTimeThreshold: Int = 1
+
+    // Keys for asking for camera permissions, based on "Getting Started with CameraX"
     private val REQUEST_CODE_PERMISSIONS = 10
     private val REQUIRED_PERMISSIONS = arrayOf(Manifest.permission.CAMERA)
-    private var listOfPoses: MutableList<TimestampedPose> = mutableListOf()
-    private lateinit var targetPose: String
-    private var holdTimeThreshold: Int = 1
-    private lateinit var textViewTargetPose: TextView
+
+    // keys to retrieve values from settings or savedInstanceState
     private val KEY_TARGET_POSE = "target_pose"
     private val KEY_LIST_OF_POSES = "list_of_poses"
     private val KEY_CORRECT_POSES = "correct_poses"
     private val KEY_TOTAL_POSES = "total_poses"
+    private val LENS_FACING_KEY: String = "lens_facing"
+
+    // list where poses with timestamps are saved, used to determine if user held a pose for
+    // long enough
+    private var listOfPoses: MutableList<TimestampedPose> = mutableListOf()
+
+    // the pose user has to do
+    private lateinit var targetPose: String
+
+    // enable/disable TTS
     private var enableVoiceMessages: Boolean = false
+
+    // TextToSpeech instance
     private lateinit var tts: TextToSpeech
+
+    // multiplier for keypoint marker size
     private var pointSize: Int = 5
+
+    // score
     private var correctPoses = 0
     private var totalPoses = 0
 
 
+    // load settings and initialize everything
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
         loadSettings()
+
+        // create TTS instance
         tts = TextToSpeech(context, this)
+
+        // get display size
         val displayMetrics = DisplayMetrics()
         activity?.windowManager?.defaultDisplay?.getMetrics(displayMetrics)
         displayHeight = displayMetrics.heightPixels
         displayWidth = displayMetrics.widthPixels
+
+        // select random pose as target
         targetPose = randomPose()
         totalPoses += 1
 
+        // set target size based on model selected in settings
         if (modelType == "I"){
             targetSize = Size(256, 256)
         }
@@ -99,14 +160,19 @@ class ChallengeModeFragment : Fragment(), PoseEstimatorUser, TextToSpeech.OnInit
             targetSize = Size(224, 224)
         }
 
+        // create instance of PoseEstimator, pass confidenceThreshold for point detection and
+        // point marker size (multiplier)
         analyzer = PoseEstimator(
                 requireContext(),
                 modelType, this)
         analyzer.updateThreshold(confidenceThreshold)
         analyzer.setPointSize(pointSize)
 
+        // create cameraExecutor (basically start a thread for the camera)
         cameraExecutor = Executors.newSingleThreadExecutor()
 
+        // set orientationListener so it automatically sends orientation to PoseEstimator,
+        // amount for which the image has to be rotated is different for front and back cameras
         orientationListener = object : OrientationEventListener(context,
                 SensorManager.SENSOR_DELAY_NORMAL) {
             override fun onOrientationChanged(orientation: Int) {
@@ -153,6 +219,8 @@ class ChallengeModeFragment : Fragment(), PoseEstimatorUser, TextToSpeech.OnInit
             }
         }
 
+        // check if there is a savedInstanceState of this fragment (returning from settings, configuration changed etc.)
+        // if yes then restore data.
         if (savedInstanceState != null)
         {
             targetPose = savedInstanceState.getString(KEY_TARGET_POSE).toString()
@@ -165,6 +233,8 @@ class ChallengeModeFragment : Fragment(), PoseEstimatorUser, TextToSpeech.OnInit
             totalPoses = savedInstanceState.getInt(KEY_TOTAL_POSES)
             correctPoses = savedInstanceState.getInt(KEY_CORRECT_POSES)
         }
+
+        // if camera permissions are granted then start camera, if no then ask for them
         if (allPermissionsGranted()) {
             startCamera()
         }
@@ -175,6 +245,7 @@ class ChallengeModeFragment : Fragment(), PoseEstimatorUser, TextToSpeech.OnInit
         }
     }
 
+    // inflate fragment layout
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
@@ -182,16 +253,27 @@ class ChallengeModeFragment : Fragment(), PoseEstimatorUser, TextToSpeech.OnInit
         return inflater.inflate(R.layout.fragment_challenge_mode, container, false)
     }
 
+    // when layout is inflated find all widgets, set onClickListeners (configure UI)
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         imageButtonSettings = view.findViewById(R.id.imageButtonSettings)
+
+        // navigate to settings after clicking "Settings" button
         imageButtonSettings.setOnClickListener {
             findNavController().navigate(R.id.action_challengeModeFragment_to_settingsFragment)
         }
+
+        // setting visibility of timePerFrame textView. Setting visibility to View.GONE
+        //  frees up the slot in LinearLayout
         textViewFPS = view.findViewById(R.id.textViewFPS)
         if (showFPS){textViewFPS.visibility = View.VISIBLE}
         else {textViewFPS.visibility = View.GONE}
+
         textureView = view.findViewById(R.id.textureView)
         textViewPoseConfidence = view.findViewById(R.id.textViewPoseConfidence)
+
+        // after switching lenses update the rotation for the first frame manually and restart camera,
+        // orientationListener only updates after detecting change in orientation,
+        // if device was stationary then the rotation passed to PoseEstimator wouldn't be updated.
         imageButtonSwitchCamera = view.findViewById(R.id.imageButtonSwitchCamera)
         imageButtonSwitchCamera.setOnClickListener {
             if (lensFacing ==  CameraSelector.DEFAULT_BACK_CAMERA) {
@@ -239,6 +321,8 @@ class ChallengeModeFragment : Fragment(), PoseEstimatorUser, TextToSpeech.OnInit
         textViewTargetPose = view.findViewById(R.id.textViewTargetPose)
         textViewScore = view.findViewById(R.id.textViewScore)
         buttonNext = view.findViewById(R.id.buttonNext)
+
+        // skip pose after clicking "Next" button
         buttonNext.setOnClickListener {
             changePose()
         }
@@ -248,6 +332,11 @@ class ChallengeModeFragment : Fragment(), PoseEstimatorUser, TextToSpeech.OnInit
         super.onResume()
 
         orientationListener.enable()
+
+        // check to see if a different model was selected in the settings.
+        // if yes then reload model and all parameters associated with it and restart camera
+        // (different target resolution for different models),
+        // check to see if time per frame textView visibility was changed and change if needed.
         val oldModelType = modelType
         val oldShowFPS = showFPS
         loadSettings()
@@ -292,6 +381,10 @@ class ChallengeModeFragment : Fragment(), PoseEstimatorUser, TextToSpeech.OnInit
     override fun onDestroy() {
         super.onDestroy()
 
+        // Shutdown thread handling camera, wait for its termination
+        // and release resources used by pose estimation model. Resources can be only released
+        // after the pose estimation model stops receiving and processing frames.
+        // Shutdown TTS.
         cameraExecutor.shutdown()
         cameraExecutor.awaitTermination(3000, TimeUnit.MILLISECONDS)
         analyzer.releaseResources()
@@ -305,6 +398,8 @@ class ChallengeModeFragment : Fragment(), PoseEstimatorUser, TextToSpeech.OnInit
         }
     }
 
+    // Write to Bundle (save) all necessary parameters on rotation, when locking screen,
+    // navigating to settings etc.
     override fun onSaveInstanceState(outState: Bundle) {
         super.onSaveInstanceState(outState)
 
@@ -320,10 +415,10 @@ class ChallengeModeFragment : Fragment(), PoseEstimatorUser, TextToSpeech.OnInit
         outState.putInt(KEY_TOTAL_POSES, totalPoses)
     }
 
+    // load settings from preferences, preferences are basically all the settings in "Settings" screen
     private fun loadSettings(){
         preferences = PreferenceManager.getDefaultSharedPreferences(context)
         confidenceThreshold = preferences.getInt("confidenceThreshold", 20)
-        filteringTimeThreshold = preferences.getInt("timeThreshold", 1)
         modelType = preferences.getString("modelType", "RT").toString()
         showFPS = preferences.getBoolean("showFPS", true)
         holdTimeThreshold = preferences.getInt("holdPoseThreshold", 1)
@@ -331,8 +426,16 @@ class ChallengeModeFragment : Fragment(), PoseEstimatorUser, TextToSpeech.OnInit
         pointSize = preferences.getInt("pointSize", 5)
     }
 
+    // method defined by PoseEstimatorUser interface. PoseEstimator returns bitmap, name of the pose,
+    // confidence for that pose, and timestamp of when was the frame passed to fragment.
     override fun update(bitmap: Bitmap, pose: String, confidence: Float, timestamp: Long){
+
+        // add pose name with timestamp to list so its possible to check for how long its being held
         listOfPoses.add(TimestampedPose(pose, timestamp))
+
+        // check if pose is correct and is being held for long enough to award point. If yes then
+        // make background of target pose textView green for 0.5 second, change target pose, clear list of poses.
+        // In the end update UI.
         if (checkPose())
         {
             CoroutineScope(Main).launch {
@@ -340,12 +443,20 @@ class ChallengeModeFragment : Fragment(), PoseEstimatorUser, TextToSpeech.OnInit
             }
             correctPoses += 1
             changePose()
+            listOfPoses.clear()
         }
         updateUI(bitmap, pose, confidence, timestamp)
+
     }
 
+
     private fun updateUI(bitmap: Bitmap, pose: String, confidence: Float, timestamp: Long){
+
+        // all actions regarding UI must be performed on UI thread
         requireActivity().runOnUiThread {
+
+            // display image from PoseEstimator on TextureView,
+            // check orientation of the screen and scale bitmap
             try{
                 val canvas = textureView.lockCanvas()
                 canvas.drawColor(Color.BLACK)
@@ -365,12 +476,15 @@ class ChallengeModeFragment : Fragment(), PoseEstimatorUser, TextToSpeech.OnInit
             } catch (e: Exception){
                 Log.d("TextureView", e.message.toString())
             }
+
+            // image from front facing camera is mirrored, it has to be flipped
             if (lensFacing == CameraSelector.DEFAULT_BACK_CAMERA) {
                 textureView.scaleX = 1F
             } else {
                 textureView.scaleX = -1F
             }
 
+            // update textViews
             textViewFPS.text = activity?.getString(R.string.timePerFrameTextView, (timestamp - lastUpdated).toInt())
             textViewPoseConfidence.text = activity?.getString(R.string.confidenceTextView, (confidence * 10000 / 100).toInt())
             textViewPose.text = activity?.getString(R.string.poseTextView, pose)
@@ -378,14 +492,18 @@ class ChallengeModeFragment : Fragment(), PoseEstimatorUser, TextToSpeech.OnInit
             lastUpdated = timestamp
             textViewScore.text = activity?.getString(R.string.scoreTextView, correctPoses, totalPoses)
         }
+
     }
 
-
+    // from "Getting Started with CameraX"
     private fun allPermissionsGranted() = REQUIRED_PERMISSIONS.all {
         ContextCompat.checkSelfPermission(requireActivity(), it) == PackageManager.PERMISSION_GRANTED
     }
 
-
+    // from "Getting Started with CameraX"
+    // checks results of permission request
+    // starts camera if permissions were granted
+    // closes activity if not (returns to main menu)
     override fun onRequestPermissionsResult(
         requestCode: Int, permissions: Array<String>, grantResults:
         IntArray
@@ -404,6 +522,7 @@ class ChallengeModeFragment : Fragment(), PoseEstimatorUser, TextToSpeech.OnInit
         }
     }
 
+    // based on "Getting Started with CameraX", using image analysis use case
     @SuppressLint("RestrictedApi")
     private fun startCamera() {
         val cameraProviderFuture = context?.let { ProcessCameraProvider.getInstance(it) }
@@ -411,17 +530,17 @@ class ChallengeModeFragment : Fragment(), PoseEstimatorUser, TextToSpeech.OnInit
         cameraProviderFuture?.addListener({
             val cameraProvider: ProcessCameraProvider = cameraProviderFuture.get()
             val imageAnalyzer = ImageAnalysis.Builder()
-                .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
-                .setTargetResolution(targetSize)
+                .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST) // keeps only latest frame in buffer
+                .setTargetResolution(targetSize)  // input size of pose estimation model
                 .build()
                 .also {
-                    it.setAnalyzer(cameraExecutor, analyzer)
+                    it.setAnalyzer(cameraExecutor, analyzer)  // frames will be sent to analyzer (Pose Estimator)
                 }
 
             try {
                 cameraProvider.unbindAll()
                 cameraProvider.bindToLifecycle(
-                    this, lensFacing, imageAnalyzer)
+                    this, lensFacing, imageAnalyzer) // starts camera session
 
             } catch (exc: Exception) {
                 Log.e("CameraX", "Use case binding failed", exc)
@@ -430,6 +549,7 @@ class ChallengeModeFragment : Fragment(), PoseEstimatorUser, TextToSpeech.OnInit
         }, ContextCompat.getMainExecutor(context))
     }
 
+    // returns random pose
     private fun randomPose(): String
     {
         val randomNumber = nextInt(10)
@@ -449,16 +569,23 @@ class ChallengeModeFragment : Fragment(), PoseEstimatorUser, TextToSpeech.OnInit
         return pose
     }
 
+    // checks if correct pose was held long enough. if yes then it returns true
     private fun checkPose(): Boolean
     {
         var poseCorrect = true
         val reversedList: MutableList<TimestampedPose> = mutableListOf()
+
+        // checks if enough time has even passed since last correctly done pose
         reversedList.addAll(listOfPoses.asReversed())
-        if (reversedList[0].timestamp - reversedList.lastOrNull()!!.timestamp < holdTimeThreshold)
+        if (reversedList[0].timestamp - reversedList.lastOrNull()!!.timestamp < holdTimeThreshold
+                || reversedList.size == 0 || reversedList.size == 1)
         {
             poseCorrect = false
             return poseCorrect
         }
+
+        // checks if the correct pose was held long enough.
+        // timestamps are in milliseconds and threshold is in seconds so it has to be multiplied
         for (pose in reversedList)
         {
             if (reversedList[0].timestamp - pose.timestamp < holdTimeThreshold * 1000 &&
@@ -467,6 +594,7 @@ class ChallengeModeFragment : Fragment(), PoseEstimatorUser, TextToSpeech.OnInit
                 poseCorrect = false
             }
 
+            // delete all records that no longer are needed.
             if (reversedList[0].timestamp - pose.timestamp >= holdTimeThreshold * 1000)
             {
                 listOfPoses.remove(pose)
@@ -475,6 +603,8 @@ class ChallengeModeFragment : Fragment(), PoseEstimatorUser, TextToSpeech.OnInit
         return poseCorrect
     }
 
+    // selects new target pose, new pose can't be the same as the old one
+    // if TTS is enabled it is activated
     private fun changePose()
     {
         var newPose: String
@@ -492,6 +622,7 @@ class ChallengeModeFragment : Fragment(), PoseEstimatorUser, TextToSpeech.OnInit
         totalPoses += 1
     }
 
+    // sets the background of textvView displaying target pose green fr 0.5 second.
     private suspend fun greenSignal()
     {
         withContext(Main)
@@ -502,6 +633,7 @@ class ChallengeModeFragment : Fragment(), PoseEstimatorUser, TextToSpeech.OnInit
         }
     }
 
+    // initializes TTS
     override fun onInit(status: Int) {
         if (status == TextToSpeech.SUCCESS) {
             val result = tts.setLanguage(Locale.ENGLISH)

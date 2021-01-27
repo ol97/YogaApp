@@ -4,15 +4,15 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".ArchiveActivity">
+    tools:context=".HistoryActivity">
 
     <fragment
-        android:id="@+id/archive_fragment"
+        android:id="@+id/history_fragment"
         android:name="androidx.navigation.fragment.NavHostFragment"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         app:defaultNavHost="true"
-        app:navGraph="@navigation/archive_nav"
+        app:navGraph="@navigation/history_nav"
         tools:layout_editor_absoluteX="118dp"
         tools:layout_editor_absoluteY="198dp" />
 </androidx.constraintlayout.widget.ConstraintLayout>

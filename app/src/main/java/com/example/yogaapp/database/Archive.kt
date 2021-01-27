@@ -6,8 +6,14 @@ import android.database.sqlite.SQLiteOpenHelper
 import android.util.Log
 import java.lang.Exception
 
+// Main class in which database is defined, created and updated.
+// Database schema is defined in ArchiveDbSchema
+// All I/O methods are defined in ArchiveHelper
+
 class Archive(context: Context) : SQLiteOpenHelper(context,"Archive.db", null, 2) {
 
+
+    // creates database
     override fun onCreate(db: SQLiteDatabase?) {
         if (db != null) {
             try{
@@ -37,6 +43,8 @@ class Archive(context: Context) : SQLiteOpenHelper(context,"Archive.db", null, 2
 
     }
 
+    // updates database if old and new versions are different.
+    // Of course "Drop table" is only good for testing, not real life application.
     override fun onUpgrade(db: SQLiteDatabase?, oldVersion: Int, newVersion: Int) {
         db?.execSQL("DROP TABLE IF EXISTS " + ArchiveDbSchema.SessionTable.TABLE_NAME)
         db?.execSQL("DROP TABLE IF EXISTS " + ArchiveDbSchema.SessionDetailsTable.TABLE_NAME)

@@ -12,6 +12,11 @@ import android.renderscript.RenderScript
 import android.renderscript.ScriptIntrinsicYuvToRGB
 import android.renderscript.Type
 
+// script released by Google to help people convert camera frames from YUV to RGB
+// shared on Apache 2.0 licence
+
+// added one method for rotating the image
+
 /**
  * Helper class used to efficiently convert a [Media.Image] object from
  * [ImageFormat.YUV_420_888] format to an RGB [Bitmap] object.

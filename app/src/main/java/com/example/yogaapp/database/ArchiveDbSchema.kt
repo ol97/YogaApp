@@ -1,5 +1,7 @@
 package com.example.yogaapp.database
 
+// Helper class containing names of all tables and their columns. Basically a database schema.
+
 class ArchiveDbSchema {
     class SessionTable {
         companion object{

@@ -13,7 +13,8 @@ import androidx.core.content.res.ResourcesCompat
 import androidx.recyclerview.widget.DividerItemDecoration
 import com.example.yogaapp.database.ArchiveHelper
 
-
+// fragment displaying list with all saved training sessions on "History" screen.
+// based on predefined Fragment (List)
 class ItemListFragment : Fragment() {
 
     private var columnCount = 1
@@ -38,8 +39,11 @@ class ItemListFragment : Fragment() {
                     columnCount <= 1 -> LinearLayoutManager(context)
                     else -> GridLayoutManager(context, columnCount)
                 }
+                // creates adapter and loads data from database
+                // in MyItemRecyclerViewAdapter it binds data with list elements
                 adapter = MyItemRecyclerViewAdapter(ArchiveHelper.getInstance(context)?.readSessions()!!)
             }
+            // adds dividers between list elements
             val divider = DividerItemDecoration(context, DividerItemDecoration.VERTICAL)
             ResourcesCompat.getDrawable(resources, R.drawable.recyclerview_divider, null)?.let { divider.setDrawable(it) }
             view.addItemDecoration(divider)

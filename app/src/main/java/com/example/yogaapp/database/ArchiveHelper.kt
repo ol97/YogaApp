@@ -8,9 +8,16 @@ import java.lang.Exception
 import java.text.SimpleDateFormat
 import java.util.*
 
+//Helper singleton class for handling all common I/O operations on the database.
+
 class ArchiveHelper(context: Context) {
     private val database = Archive(context).writableDatabase
 
+    // Insert a list of poses with their duration into database.
+    // Parameter "name" is the name of the recording given by the user.
+    // Parameter "listOfPoses" is a list of pose names and their duration.
+    // Returns Boolean which indicates whether the operation was successful or not.
+    // Used for saving recording in "Recording Mode".
     fun insertSession(listOfPoses: List<TimestampedPose>, name: String): Boolean{
         var ok = true
         try
@@ -27,8 +34,10 @@ class ArchiveHelper(context: Context) {
             values.put(ArchiveDbSchema.SessionTable.Cols.DATE, currentDate)
             values.put(ArchiveDbSchema.SessionTable.Cols.DURATION, totalDuration)
 
+            // insert basic information about the training
             val sessionId = database.insertOrThrow(ArchiveDbSchema.SessionTable.TABLE_NAME, null, values)
 
+            // iterate through list of all poses and write them to database one by one.
             for ((i, timestampedPose) in listOfPoses.withIndex()){
                 values.clear()
                 values.put(ArchiveDbSchema.SessionDetailsTable.Cols.POSE_NAME, timestampedPose.poseName)
@@ -49,7 +58,9 @@ class ArchiveHelper(context: Context) {
         return ok
     }
 
-
+    // Reads basic details of all training sessions saved in database and returns them in a list.
+    // Used for populating RecyclerView in "History" screen.
+    // If no results are found then empty list is returned.
     fun readSessions(): List<Array<String>> {
         try
         {
@@ -82,8 +93,8 @@ class ArchiveHelper(context: Context) {
         }
     }
 
-
-    fun readSessionDetails(sessionId: String): List<Array<String>>{
+    // Read the sequence of poses in a saved training. Used in detailed view in "History".
+    fun readPoseSequence(sessionId: String): List<Array<String>>{
         val list = mutableListOf<Array<String>>()
         try {
 
@@ -114,6 +125,8 @@ class ArchiveHelper(context: Context) {
         return list
     }
 
+    // Renaming a saved training. Used in detailed view in "History".
+    // Returns Boolean which indicates whether the operation was successful.
     fun changeSessionName(newName:String, sessionId: String):Boolean{
         var ok = true
         val values = ContentValues()
@@ -131,14 +144,16 @@ class ArchiveHelper(context: Context) {
         return ok
     }
 
-    fun deleteSession(sessionKey: String): Boolean{
+    // Delete saved training session from database. Used in detailed view in "History".
+    // Returns Boolean which indicates whether the operation was successful.
+    fun deleteSession(sessionId: String): Boolean{
         var ok = true
         try{
             database.delete(ArchiveDbSchema.SessionDetailsTable.TABLE_NAME,
-           ArchiveDbSchema.SessionDetailsTable.Cols.SESSION_ID + " = CAST(? AS INTEGER)", arrayOf(sessionKey))
+           ArchiveDbSchema.SessionDetailsTable.Cols.SESSION_ID + " = CAST(? AS INTEGER)", arrayOf(sessionId))
             database.delete(ArchiveDbSchema.SessionTable.TABLE_NAME,
                     ArchiveDbSchema.SessionTable.Cols.ID + "= CAST(? AS INTEGER)",
-                    arrayOf(sessionKey))
+                    arrayOf(sessionId))
         }
         catch(e: Exception)
         {
@@ -149,7 +164,11 @@ class ArchiveHelper(context: Context) {
         return ok
     }
 
-    fun readBasicSessionData(sessionId: String): Array<String> {
+    // Read all the basic session details like name, date, time, duration.
+    // Used in detailed view in "History".
+    // Most data is passed from list elements, this method is used when the data needs to be re-read
+    // for example when the training session is renamed
+    fun readBasicSessionDetails(sessionId: String): Array<String> {
         try
         {
             val cursor = database.query(false, ArchiveDbSchema.SessionTable.TABLE_NAME,
@@ -181,6 +200,8 @@ class ArchiveHelper(context: Context) {
         }
     }
 
+    // Reads only names of saved trainings and return them as a list. Used to ensure that
+    // the user inserts a name that isn't already taken when saving recording in "Recording Mode".
     fun readSessionNames(): MutableList<String> {
         try
         {
@@ -210,6 +231,9 @@ class ArchiveHelper(context: Context) {
 
     }
 
+    // Static getInstance method to make this a singleton. This entire class should be a "object"
+    // rather than a "class", but object can't have a constructor and this needs a Context to connect
+    // to the database. There probably is a better workaround, but I don't know it.
     companion object{
         private var instance: ArchiveHelper? = null
         fun getInstance(context: Context): ArchiveHelper? {
