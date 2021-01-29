@@ -24,7 +24,7 @@ YogaApp/app/src/main/java/com/example/yogaapp/ - Kotlin classes
                        and navigation graphs (/res/navigation/analyzer_nav_challenge.xml,
                        /res/navigation/analyzer_nav_recorder.xml). Ideally there should be only one 
                        graph with two entry points, but I had some problems with making it work with
-                       configuration changes (two instances of Fragment were be created). 
+                       configuration changes (two instances of Fragment were created). 
                        As a solution I split it into two graphs (ChallengeMode + Settings, 
                        RecordingMode + Settings). Correct one is selected in onCreate method of
                        AnalyzerActivity.
