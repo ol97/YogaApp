@@ -31,6 +31,7 @@ class SelectionScreenActivity : AppCompatActivity() {
             startActivity(intent)
         }
 
+
         val buttonHistory = findViewById<Button>(R.id.buttonHistory)
         buttonHistory.setOnClickListener{
             val intent = Intent(this, HistoryActivity::class.java)

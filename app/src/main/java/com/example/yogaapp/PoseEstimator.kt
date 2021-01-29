@@ -51,12 +51,13 @@ class PoseEstimator(context: Context, private val type:String,
     private lateinit var inputSize: Size
 
     // confidence threshold for keypoints, if their confidence is lower than the threshold then
-    // such points are not marked on the image and their coordinates are set to [0,0]
+    // such points are not marked on the image and their coordinates are set to [0,0],
+    // passed from parent Fragment
     private var confidenceThreshold = 0
 
-    // Job returned by launching coroutine in which output of the pose estimation is parsed,
+    // Job returned when launching coroutine in which output of the pose estimation is parsed,
     // points are marked on the image and pose is classified. Used to
-    // check if processing of previous frame has completed before launching coroutine for next one.
+    // check if processing of the previous frame has completed before launching coroutine for the next one.
     private var parsingJob: Job? = null
 
     // classifier model
@@ -66,7 +67,7 @@ class PoseEstimator(context: Context, private val type:String,
     // before releasing resources.
     private var analysisInProgress: Boolean = false
 
-    // angle by which image has to be rotated
+    // angle by which image has to be rotated, passed from parent Fragment
     private var rotation: Float = 90F
 
     // loads strings from resources (R.strings. ...)
@@ -82,7 +83,7 @@ class PoseEstimator(context: Context, private val type:String,
     private var camelPoseString: String = context.getString(R.string.camelPose)
     private var unknownPoseString: String = context.getString(R.string.unknownPose)
 
-    // keypoint marker multiplier
+    // keypoint marker size multiplier
     private var pointSize: Int = 5
 
     // mean and standard deviations by which input parameters of classifier have to be normalized
@@ -150,7 +151,7 @@ class PoseEstimator(context: Context, private val type:String,
         if (imageProcessor == null){
             val maxDimension = max(image.width, image.height)
 
-            // pad 1:1 aspect ratio
+            // pad to 1:1 aspect ratio
             // scale to input size of pose estimation model
             // normalize to [0,1]
             // normalize to ImageNet specs
@@ -270,7 +271,8 @@ class PoseEstimator(context: Context, private val type:String,
         val classifierOutput = classifyPose(inputArray)
 
         // sends image with marked points, name of the pose with confidence score and timestamp to
-        // fragment (ChallengeMode or RecordingMode) in which everything will be further processed.
+        // fragment (ChallengeMode or RecordingMode) in which everything will be further processed
+        // and displayed.
         poseEstimatorUser.update(drawPoints(bitmap,pointsArray,scoresArray),
             classifierOutput.first, classifierOutput.second, System.currentTimeMillis())
 
@@ -281,7 +283,7 @@ class PoseEstimator(context: Context, private val type:String,
         var indexOfMax = 0
         var maxConfidence = 0F
 
-        // checks if the array contains non zero values, zeroes mean that keypoint had confodence
+        // checks if the array contains non zero values, zeroes mean that keypoint had confidence
         // score lower than the threshold and was rejected,
         // if all coordinates are zeroes then it's an unknown pose
         if (inputArray.distinct().lastIndex != 0){
@@ -374,7 +376,7 @@ class PoseEstimator(context: Context, private val type:String,
             yArray[i] /= yArrayMax!!
         }
 
-        // normalize coordinates with mean and std values of dataset used for training classifier
+        // normalize coordinates with mean and std values of dataset used to train classifier
         // if confidence score for a keypoint is lower than the threshold then it's coordinates
         // are set to [0,0]
         for (i in 0 until 16){

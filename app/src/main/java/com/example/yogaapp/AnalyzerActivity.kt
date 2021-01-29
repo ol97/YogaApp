@@ -5,11 +5,11 @@ import android.view.WindowManager
 import androidx.appcompat.app.AppCompatActivity
 import androidx.navigation.findNavController
 
-// Activity that hosts fragments for either "Recording Mode" or "Challenge Mode".
+// Activity that hosts fragments for either "Recording Mode" or "Challenge Mode" and Settings.
 // I had some problems making the navigation work the way I wanted.
 // Currently the name of the mode selected in
 // the main menu is passed to this activity and based on that the correct navigation graph is selected and used.
-// Ideally there should be only one navigation graph.
+// Ideally there should be only one navigation graph with two entry points.
 // The alternative is to use FragmentManager and switch between fragments manually.
 
 class AnalyzerActivity : AppCompatActivity() {

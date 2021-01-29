@@ -137,7 +137,7 @@ class RecordingModeFragment : Fragment(), PoseEstimatorUser {
         }
 
         // create instance of PoseEstimator, pass confidenceThreshold for point detection and
-        // point marker size (multiplier)
+        // keypoint marker size (multiplier)
         analyzer = PoseEstimator(
                 requireContext(),
                 modelType, this)

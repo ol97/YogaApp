@@ -5,7 +5,8 @@ import android.os.Bundle
 import android.text.method.LinkMovementMethod
 import android.widget.TextView
 
-// Activity hosting "About" fragment.
+// Activity in which About screen is displayed,
+// only displayed static layout
 
 class AboutActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {

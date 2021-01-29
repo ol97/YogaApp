@@ -32,7 +32,7 @@ import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 import kotlin.random.Random.Default.nextInt
 
-// Fragment handling logic of "Challenge Mode"
+// Fragment handling logic an UI of "Challenge Mode"
 // PoseEstimatorUser is an interface used to pass data from PoseEstimator to whatever
 // is using it ("Recording Mode" or "Challenge Mode"). TextTosSpeech.OnInitListener to use TTS.
 
@@ -219,7 +219,7 @@ class ChallengeModeFragment : Fragment(), PoseEstimatorUser, TextToSpeech.OnInit
             }
         }
 
-        // check if there is a savedInstanceState of this fragment (returning from settings, configuration changed etc.)
+        // check if there is a savedInstanceState of this fragment (returning from settings, configuration changes etc.)
         // if yes then restore data.
         if (savedInstanceState != null)
         {
@@ -456,7 +456,7 @@ class ChallengeModeFragment : Fragment(), PoseEstimatorUser, TextToSpeech.OnInit
         requireActivity().runOnUiThread {
 
             // display image from PoseEstimator on TextureView,
-            // check orientation of the screen and scale bitmap
+            // check orientation of the screen and scale bitmap, fit image to screen
             try{
                 val canvas = textureView.lockCanvas()
                 canvas.drawColor(Color.BLACK)
@@ -477,7 +477,7 @@ class ChallengeModeFragment : Fragment(), PoseEstimatorUser, TextToSpeech.OnInit
                 Log.d("TextureView", e.message.toString())
             }
 
-            // image from front facing camera is mirrored, it has to be flipped
+            // image from front facing camera is mirrored, it has to be flipped, this is the easiest way
             if (lensFacing == CameraSelector.DEFAULT_BACK_CAMERA) {
                 textureView.scaleX = 1F
             } else {
@@ -503,7 +503,7 @@ class ChallengeModeFragment : Fragment(), PoseEstimatorUser, TextToSpeech.OnInit
     // from "Getting Started with CameraX"
     // checks results of permission request
     // starts camera if permissions were granted
-    // closes activity if not (returns to main menu)
+    // if not closes activity (and in turn this fragment) - returns to main menu
     override fun onRequestPermissionsResult(
         requestCode: Int, permissions: Array<String>, grantResults:
         IntArray
@@ -538,15 +538,15 @@ class ChallengeModeFragment : Fragment(), PoseEstimatorUser, TextToSpeech.OnInit
                 }
 
             try {
-                cameraProvider.unbindAll()
+                cameraProvider.unbindAll() // unbind all use cases before binding new ones, to avoid having doubles
                 cameraProvider.bindToLifecycle(
-                    this, lensFacing, imageAnalyzer) // starts camera session
+                    this, lensFacing, imageAnalyzer) // starts camera session, binds created use case
 
             } catch (exc: Exception) {
                 Log.e("CameraX", "Use case binding failed", exc)
             }
 
-        }, ContextCompat.getMainExecutor(context))
+        }, ContextCompat.getMainExecutor(context)) // sets camera session to use thread created earlier
     }
 
     // returns random pose
@@ -575,7 +575,7 @@ class ChallengeModeFragment : Fragment(), PoseEstimatorUser, TextToSpeech.OnInit
         var poseCorrect = true
         val reversedList: MutableList<TimestampedPose> = mutableListOf()
 
-        // checks if enough time has even passed since last correctly done pose
+        // checks if enough time has even passed since last correctly performed pose
         reversedList.addAll(listOfPoses.asReversed())
         if (reversedList[0].timestamp - reversedList.lastOrNull()!!.timestamp < holdTimeThreshold
                 || reversedList.size == 0 || reversedList.size == 1)
@@ -585,7 +585,7 @@ class ChallengeModeFragment : Fragment(), PoseEstimatorUser, TextToSpeech.OnInit
         }
 
         // checks if the correct pose was held long enough.
-        // timestamps are in milliseconds and threshold is in seconds so it has to be multiplied
+        // timestamps are in milliseconds and the threshold is in seconds so it has to be multiplied
         for (pose in reversedList)
         {
             if (reversedList[0].timestamp - pose.timestamp < holdTimeThreshold * 1000 &&
@@ -613,6 +613,7 @@ class ChallengeModeFragment : Fragment(), PoseEstimatorUser, TextToSpeech.OnInit
             newPose = randomPose()
         }
         while(newPose == targetPose)
+
         targetPose = newPose
         listOfPoses.clear()
         if (enableVoiceMessages)

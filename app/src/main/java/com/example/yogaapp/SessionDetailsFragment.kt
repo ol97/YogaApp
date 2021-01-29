@@ -32,7 +32,7 @@ class SessionDetailsFragment : Fragment() {
     private lateinit var buttonDelete: Button
     private lateinit var buttonRename: Button
 
-    // inflate layout
+
     override fun onCreateView(
             inflater: LayoutInflater, container: ViewGroup?,
             savedInstanceState: Bundle?
