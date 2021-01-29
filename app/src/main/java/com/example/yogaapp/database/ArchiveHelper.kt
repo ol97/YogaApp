@@ -166,7 +166,8 @@ class ArchiveHelper(context: Context) {
 
     // Read all the basic session details like name, date, time, duration.
     // Used in detailed view in "History".
-    // Most data is passed from list elements, this method is used when the data needs to be re-read
+    // Most of the necessary data is passed from list elements, this method is used when
+    // data needs to be re-read,
     // for example when the training session is renamed
     fun readBasicSessionDetails(sessionId: String): Array<String> {
         try
@@ -201,7 +202,7 @@ class ArchiveHelper(context: Context) {
     }
 
     // Reads only names of saved trainings and return them as a list. Used to ensure that
-    // the user inserts a name that isn't already taken when saving recording in "Recording Mode".
+    // the user inserts a name that isn't already taken when saving a recording in "Recording Mode".
     fun readSessionNames(): MutableList<String> {
         try
         {
