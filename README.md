@@ -64,7 +64,7 @@ YogaApp/app/src/main/java/com/example/yogaapp/ - Kotlin classes
                                 
     PoseEstimator - Class handling image processing, pose estimation, and yoga pose classification.
     
-    PoseEstimatorUser - Hnterface introduced to make sending data from PoseEstimator to  
+    PoseEstimatorUser - Interface introduced to make sending data from PoseEstimator to  
                         it's parent object a bit easier.
                         
     TimestampedPose - Class defining new datatype: TimestampedPose, it is basically 
